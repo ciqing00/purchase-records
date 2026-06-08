@@ -3,139 +3,194 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>购入记录 - 资产管理工具</title>
+    <title>购入记录 · 智能管理</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-            background: #f5f7fb;
-            color: #1e293b;
+            background: #f4f7fc;
+            color: #1a2c3e;
             padding: 2rem 1.5rem;
         }
         .container { max-width: 1400px; margin: 0 auto; }
         .header {
             display: flex;
             justify-content: space-between;
-            align-items: baseline;
+            align-items: center;
             flex-wrap: wrap;
             gap: 1rem;
             margin-bottom: 2rem;
-            border-bottom: 2px solid #e2e8f0;
             padding-bottom: 1rem;
+            border-bottom: 2px solid rgba(100, 116, 139, 0.2);
         }
         h1 {
             font-size: 2rem;
             font-weight: 600;
-            background: linear-gradient(135deg, #2c3e66, #1e2a44);
+            background: linear-gradient(135deg, #1e4b6e, #2c7a4d);
             background-clip: text;
             -webkit-background-clip: text;
             color: transparent;
         }
         .auth-badge {
-            background: white;
-            border-radius: 40px;
+            background: #ffffffcc;
+            backdrop-filter: blur(4px);
+            border-radius: 60px;
             padding: 0.4rem 1rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
             display: flex;
             align-items: center;
             gap: 0.8rem;
         }
         .admin-btn {
-            background: #1e293b;
+            background: #1f4e6c;
             color: white;
             border: none;
             padding: 0.4rem 1rem;
             border-radius: 40px;
             cursor: pointer;
         }
+        .category-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
         .category-tabs {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.5rem;
-            margin-bottom: 2rem;
-            border-bottom: 1px solid #e2e8f0;
-            padding-bottom: 0.75rem;
+            gap: 0.6rem;
         }
         .tab-btn {
-            background: transparent;
+            background: #eef2f6;
             border: none;
-            padding: 0.6rem 1.4rem;
-            font-size: 1rem;
-            font-weight: 500;
+            padding: 0.5rem 1.3rem;
             border-radius: 40px;
             cursor: pointer;
-            color: #475569;
+            font-weight: 500;
         }
         .tab-btn.active {
-            background: #ffffff;
-            color: #0f172a;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05), 0 0 0 1px #e2e8f0;
+            background: white;
+            color: #1f4e6c;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05), 0 0 0 1px #cbd5e1;
+        }
+        .settings-icon {
+            background: #eef2f6;
+            border: none;
+            width: 2.4rem;
+            height: 2.4rem;
+            border-radius: 60px;
+            font-size: 1.2rem;
+            cursor: pointer;
         }
         .content-panel {
             background: white;
-            border-radius: 24px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.02);
-            padding: 1.5rem;
+            border-radius: 28px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.03);
+            padding: 1.8rem;
         }
         .list-header {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 1.2rem;
-            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .list-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1f4e6c;
         }
         .add-btn {
-            background: #0f172a;
+            background: #2c7a4d;
             color: white;
             border: none;
             padding: 0.5rem 1.2rem;
-            border-radius: 30px;
+            border-radius: 40px;
             cursor: pointer;
         }
+        .items-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        /* 高亮警告卡片 */
         .item-card {
-            background: #fafcff;
-            border-radius: 20px;
-            border: 1px solid #edf2f7;
-            margin-bottom: 1rem;
+            background: #ffffff;
+            border-radius: 24px;
+            border: 1px solid #e9edf2;
             padding: 1.2rem;
+            transition: 0.2s;
+        }
+        .item-card.warning {
+            border: 2px solid #f97316;
+            background: #fff7ed;
+            box-shadow: 0 2px 8px rgba(249,115,22,0.1);
+        }
+        .warning-badge {
+            display: inline-block;
+            background: #f97316;
+            color: white;
+            border-radius: 30px;
+            padding: 0.2rem 0.7rem;
+            font-size: 0.7rem;
+            font-weight: bold;
+            margin-left: 0.5rem;
         }
         .item-title {
-            font-weight: 700;
             display: flex;
             justify-content: space-between;
-            margin-bottom: 0.6rem;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 0.8rem;
+        }
+        .item-name {
+            font-weight: 700;
+            font-size: 1.1rem;
+            background: #f1f5f9;
+            padding: 0.2rem 0.8rem;
+            border-radius: 30px;
         }
         .edit-btn, .delete-btn {
             background: none;
             border: none;
-            cursor: pointer;
-            padding: 0.2rem 0.6rem;
+            padding: 0.3rem 0.9rem;
             border-radius: 30px;
+            cursor: pointer;
         }
-        .edit-btn { color: #3b82f6; background: #eff6ff; }
-        .delete-btn { color: #ef4444; background: #fef2f2; }
-        .detail-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.8rem;
-            font-size: 0.85rem;
-        }
-        .detail-tag {
-            background: #f1f5f9;
-            padding: 0.2rem 0.6rem;
-            border-radius: 20px;
-        }
-        .aa-list {
-            margin-top: 8px;
+        .edit-btn { background: #eef2ff; color: #2563eb; }
+        .delete-btn { background: #fee2e2; color: #dc2626; }
+        .detail-badge {
             background: #f8fafc;
-            border-radius: 16px;
-            padding: 0.6rem;
+            border-radius: 30px;
+            padding: 0.2rem 0.7rem;
+            font-size: 0.75rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
         }
+        .friend-gift {
+            background: #fef6e0;
+            border-radius: 16px;
+            padding: 0.5rem;
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+        }
+        .remark-text {
+            background: #f1f5f9;
+            border-radius: 12px;
+            padding: 0.4rem 0.6rem;
+            margin-top: 0.6rem;
+            font-size: 0.8rem;
+            color: #475569;
+            border-left: 3px solid #2c7a4d;
+        }
+        /* 模态框 */
         .modal {
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
             background: rgba(0,0,0,0.4);
-            backdrop-filter: blur(4px);
+            backdrop-filter: blur(6px);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -143,50 +198,52 @@
         }
         .modal-content {
             background: white;
-            max-width: 700px;
+            max-width: 800px;
             width: 90%;
             max-height: 85vh;
             overflow-y: auto;
             border-radius: 32px;
-            padding: 1.5rem;
+            padding: 1.8rem;
         }
         .form-group { margin-bottom: 1rem; }
         label { font-weight: 500; display: block; margin-bottom: 0.3rem; font-size: 0.85rem; }
         input, select, textarea {
             width: 100%;
-            padding: 0.6rem;
-            border-radius: 14px;
+            padding: 0.6rem 0.8rem;
+            border-radius: 16px;
             border: 1px solid #cbd5e1;
+            font-size: 0.9rem;
         }
-        .form-row { display: flex; gap: 1rem; flex-wrap: wrap; }
-        .form-row > div { flex: 1; }
-        .modal-buttons { display: flex; justify-content: flex-end; gap: 0.8rem; margin-top: 1.5rem; }
-        button.secondary { background: #e2e8f0; border: none; padding: 0.5rem 1rem; border-radius: 30px; cursor: pointer; }
+        textarea { resize: vertical; }
+        .form-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.8rem; }
+        .checkbox-group { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; }
+        .modal-buttons { display: flex; justify-content: flex-end; gap: 0.8rem; margin-top: 1.8rem; }
+        .secondary { background: #e2e8f0; border: none; padding: 0.5rem 1rem; border-radius: 30px; cursor: pointer; }
         .empty-state { text-align: center; padding: 3rem; color: #94a3b8; }
+        .recipients-input { margin-left: 1rem; margin-top: 0.5rem; padding-left: 0.5rem; border-left: 2px solid #ddd; }
         @media (max-width: 640px) { body { padding: 1rem; } }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="header">
-        <h1>📦 购入记录</h1>
+        <h1>📦 购入记录 · 智能提醒</h1>
         <div class="auth-badge">
             <span id="authStatus">👤 访客模式 · 只读</span>
             <button id="toggleAdminBtn" class="admin-btn">🔐 管理员登录</button>
         </div>
     </div>
-    <div class="category-tabs">
-        <button class="tab-btn" data-cat="watermark_club">水印会</button>
-        <button class="tab-btn" data-cat="watermark_car">水印车</button>
-        <button class="tab-btn" data-cat="design_car">设车</button>
-        <button class="tab-btn" data-cat="original_club">原创会</button>
+    <div class="category-bar">
+        <div class="category-tabs" id="categoryTabs"></div>
+        <button id="openSettingsBtn" class="settings-icon" style="display: none;">⚙️</button>
     </div>
+    <div id="settingsPanel" style="display: none;"></div>
     <div class="content-panel">
         <div class="list-header">
             <span class="list-title" id="categoryTitle">水印会</span>
             <button id="addItemBtn" class="add-btn" style="display: none;">➕ 新增记录</button>
         </div>
-        <div id="itemsListContainer">加载中...</div>
+        <div id="itemsListContainer"><div class="empty-state">加载中...</div></div>
     </div>
 </div>
 
@@ -195,7 +252,13 @@
     let currentCategory = 'watermark_club';
     let isAdmin = false;
     let itemsData = { watermark_club: [], watermark_car: [], design_car: [], original_club: [] };
-    const catNameMap = { watermark_club:'水印会', watermark_car:'水印车', design_car:'设车', original_club:'原创会' };
+    let settings = { hiddenCategories: [] };
+    const allCategories = [
+        { id: 'watermark_club', name: '水印会' },
+        { id: 'watermark_car', name: '水印车' },
+        { id: 'design_car', name: '设车' },
+        { id: 'original_club', name: '原创会' }
+    ];
 
     async function fetchAPI(endpoint, options={}) {
         const res = await fetch(`${API_BASE}${endpoint}`, {
@@ -204,6 +267,48 @@
         });
         if (!res.ok) throw new Error(await res.text());
         return res.json();
+    }
+
+    async function loadSettings() {
+        try {
+            const data = await fetchAPI('/settings');
+            settings = data;
+        } catch(e) { console.warn(e); }
+        renderCategoryTabs();
+    }
+
+    async function saveSettings(newSettings) {
+        if (!isAdmin) return;
+        await fetchAPI('/settings', { method:'PUT', body: JSON.stringify(newSettings), headers:{ 'X-Admin-Password':'001128' } });
+        settings = newSettings;
+        renderCategoryTabs();
+        renderCurrentView();
+    }
+
+    function renderCategoryTabs() {
+        const container = document.getElementById('categoryTabs');
+        const visibleCats = allCategories.filter(cat => !settings.hiddenCategories.includes(cat.id));
+        if (visibleCats.length === 0) {
+            container.innerHTML = '<div style="padding:0.5rem;">暂无可见分类，请管理员设置</div>';
+            return;
+        }
+        container.innerHTML = visibleCats.map(cat => `<button class="tab-btn ${currentCategory === cat.id ? 'active' : ''}" data-cat="${cat.id}">${cat.name}</button>`).join('');
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentCategory = btn.dataset.cat;
+                document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById('categoryTitle').innerText = allCategories.find(c=>c.id===currentCategory)?.name || '';
+                document.getElementById('addItemBtn').style.display = isAdmin ? 'flex' : 'none';
+                renderCurrentView();
+            });
+        });
+        if (settings.hiddenCategories.includes(currentCategory) && visibleCats.length) {
+            currentCategory = visibleCats[0].id;
+            renderCategoryTabs();
+            document.getElementById('categoryTitle').innerText = allCategories.find(c=>c.id===currentCategory)?.name || '';
+            renderCurrentView();
+        }
     }
 
     async function loadAllData() {
@@ -217,8 +322,28 @@
             itemsData = { watermark_club: club, watermark_car: car, design_car: design, original_club: original };
             renderCurrentView();
         } catch(err) {
-            document.getElementById('itemsListContainer').innerHTML = '<div class="empty-state">❌ 无法连接后端，请确保已运行 node server.js</div>';
+            document.getElementById('itemsListContainer').innerHTML = '<div class="empty-state">⚠️ 连接失败</div>';
         }
+    }
+
+    // 判断是否需要高亮
+    function isWarningItem(item, cat) {
+        if (cat === 'watermark_club') {
+            if (!item.isFormFilled) return true;
+            if (item.sendMethod === '单标群' && (!item.invited || !item.joinedGroup || !item.locked)) return true;
+            if (!item.isImageStored) return true;
+            return false;
+        } else if (cat === 'watermark_car') {
+            if (!item.isPaid || !item.isFormFilled || !item.isShipped || !item.isImageStored) return true;
+            return false;
+        } else if (cat === 'design_car') {
+            if (!item.aaImgSent || !item.aaImgSaved) return true;
+            return false;
+        } else if (cat === 'original_club') {
+            if (!item.isFormFilled || !item.isGroupInvited || !item.isJoined || !item.isImageStored) return true;
+            return false;
+        }
+        return false;
     }
 
     function renderCurrentView() {
@@ -227,57 +352,91 @@
         const container = document.getElementById('itemsListContainer');
         if (!sorted.length) { container.innerHTML = '<div class="empty-state">✨ 暂无记录</div>'; return; }
         if (currentCategory === 'design_car') {
-            container.innerHTML = sorted.map(item => renderDesignCarCard(item)).join('');
+            container.innerHTML = `<div class="items-grid">${sorted.map(item => renderDesignCarCard(item)).join('')}</div>`;
         } else {
-            container.innerHTML = sorted.map(item => renderCommonCard(item)).join('');
+            container.innerHTML = `<div class="items-grid">${sorted.map(item => renderCommonCard(item)).join('')}</div>`;
         }
         if (isAdmin) {
             document.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', (e) => openEditModal(btn.dataset.id)));
-            document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', async (e) => { if(confirm('删除?')) await deleteItem(btn.dataset.id); }));
+            document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', async (e) => { if(confirm('确认删除？')) await deleteItem(btn.dataset.id); }));
         }
     }
 
     function renderCommonCard(item) {
+        const warning = isWarningItem(item, currentCategory);
+        let statusHtml = '';
+        if (currentCategory === 'watermark_club' || currentCategory === 'original_club') {
+            statusHtml = `<span class="detail-badge">${item.isCompleted ? '✅ 完结' : '🔄 未完结'}</span>
+                          <span class="detail-badge">${item.isImageStored ? '📸 已存图' : '⚠️ 未存图'}</span>`;
+        }
         let extra = '';
         if (currentCategory === 'watermark_club') {
-            extra = `<div class="detail-grid">
-                <span class="detail-tag">💰 ${item.price||'-'}</span>
-                <span class="detail-tag">📄 ${item.form||'-'}</span>
-                <span class="detail-tag">📋 填表:${item.isFormFilled?'是':'否'}</span>
-                <span class="detail-tag">📬 ${item.sendMethod||'-'}</span>
-                ${item.sendMethod==='单标群'? `<span class="detail-tag">邀请:${item.invited?'是':'否'} 进群:${item.joinedGroup?'是':'否'} 锁群:${item.locked?'是':'否'} 管理:${item.isManager?'是':'否'}</span>`:''}
-                ${renderFriendGift(item.friendGift)}
-            </div>`;
+            extra = `<div class="detail-badge">💰 ${item.price||'-'}</div>
+                     <div class="detail-badge">📄 ${item.form||'-'}</div>
+                     <div class="detail-badge">📋 填表:${item.isFormFilled?'✅是':'❌未'}</div>
+                     <div class="detail-badge">📬 ${item.sendMethod||'-'}</div>
+                     ${item.sendMethod==='单标群'? `<div class="detail-badge">邀请:${item.invited?'✅':'❌'} 进群:${item.joinedGroup?'✅':'❌'} 锁群:${item.locked?'✅':'❌'} 管理:${item.isManager?'✅':'❌'}</div>`:''}
+                     ${renderFriendGift(item.friendGift)}`;
         } else if (currentCategory === 'watermark_car') {
-            extra = `<div class="detail-grid">
-                <span class="detail-tag">💰 ${item.price||'-'}</span>
-                <span class="detail-tag">🎨 ${item.style||'-'}</span>
-                <span class="detail-tag">付钱:${item.isPaid?'是':'否'} 填表:${item.isFormFilled?'是':'否'} 发货:${item.isShipped?'是':'否'}</span>
-                ${renderFriendGift(item.friendGift)}
-            </div>`;
+            extra = `<div class="detail-badge">💰 ${item.price||'-'}</div>
+                     <div class="detail-badge">🎨 ${item.style||'-'}</div>
+                     <div class="detail-badge">付钱:${item.isPaid?'✅':'❌'} 填表:${item.isFormFilled?'✅':'❌'} 发货:${item.isShipped?'✅':'❌'}</div>
+                     ${renderFriendGift(item.friendGift)}`;
         } else if (currentCategory === 'original_club') {
-            extra = `<div class="detail-grid">
-                <span class="detail-tag">💰 ${item.amount||'-'}</span>
-                <span class="detail-tag">📄 ${item.form||'-'}</span>
-                <span class="detail-tag">填表:${item.isFormFilled?'是':'否'} 拉群:${item.isGroupInvited?'是':'否'} 进群:${item.isJoined?'是':'否'}</span>
-            </div>`;
+            extra = `<div class="detail-badge">💰 ${item.amount||'-'}</div>
+                     <div class="detail-badge">📄 ${item.form||'-'}</div>
+                     <div class="detail-badge">填表:${item.isFormFilled?'✅':'❌'} 拉群:${item.isGroupInvited?'✅':'❌'} 进群:${item.isJoined?'✅':'❌'}</div>`;
         }
-        return `<div class="item-card"><div class="item-title"><span>📌 ${escapeHtml(item.name)}</span>${isAdmin?`<div><button class="edit-btn" data-id="${item.id}">编辑</button><button class="delete-btn" data-id="${item.id}">删除</button></div>`:''}</div>${extra}</div>`;
+        const remarkHtml = item.remark ? `<div class="remark-text">📝 备注：${escapeHtml(item.remark)}</div>` : '';
+        return `<div class="item-card ${warning ? 'warning' : ''}">
+                    <div class="item-title">
+                        <span class="item-name">📌 ${escapeHtml(item.name)} ${warning ? '<span class="warning-badge">⚠️ 待处理</span>' : ''}</span>
+                        ${isAdmin? `<div><button class="edit-btn" data-id="${item.id}">编辑</button><button class="delete-btn" data-id="${item.id}">删除</button></div>` : ''}
+                    </div>
+                    <div style="display:flex; flex-wrap:wrap; gap:0.6rem; margin-bottom:0.5rem;">${statusHtml}</div>
+                    <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">${extra}</div>
+                    ${remarkHtml}
+                </div>`;
     }
 
     function renderDesignCarCard(item) {
+        const warning = isWarningItem(item, 'design_car');
         let aaHtml = '';
         if (item.aaItems && item.aaItems.length) {
-            aaHtml = `<div class="aa-list"><strong>📅 AA明细</strong><br>${item.aaItems.map(aa => `<div>▪️ ${aa.name} | ${aa.amount} | ${aa.time} | 发图:${aa.isImgSent?'✓':'✗'} 存图:${aa.isImgSaved?'✓':'✗'}</div>`).join('')}</div>`;
+            aaHtml = `<div style="margin-top:0.6rem; background:#f8fafc; border-radius:16px; padding:0.6rem;"><strong>📅 AA明细</strong><br>${item.aaItems.map(aa => `<div>▪️ ${aa.name} | ${aa.amount} | ${aa.time} | 发图:${aa.isImgSent?'✓':'✗'} 存图:${aa.isImgSaved?'✓':'✗'}</div>`).join('')}</div>`;
         }
-        return `<div class="item-card"><div class="item-title"><span>🚗 【${escapeHtml(item.subCategoryName)}】${escapeHtml(item.name)}</span>${isAdmin?`<div><button class="edit-btn" data-id="${item.id}">编辑</button><button class="delete-btn" data-id="${item.id}">删除</button></div>`:''}</div>
-                <div class="detail-grid"><span class="detail-tag">月预算:${item.monthBudget||'-'}</span><span class="detail-tag">上车:${item.joinTime||'-'}</span><span class="detail-tag">发图:${item.aaImgSent?'是':'否'}</span><span class="detail-tag">存图:${item.aaImgSaved?'是':'否'}</span></div>${aaHtml}</div>`;
+        const statusBadge = item.carStatus === 'on' ? '🚗 在车' : '🚫 下车';
+        const remarkHtml = item.remark ? `<div class="remark-text">📝 备注：${escapeHtml(item.remark)}</div>` : '';
+        return `<div class="item-card ${warning ? 'warning' : ''}">
+                    <div class="item-title">
+                        <span class="item-name">🚗 【${escapeHtml(item.subCategoryName)}】${escapeHtml(item.name)} ${warning ? '<span class="warning-badge">⚠️ 未发图/存图</span>' : ''}</span>
+                        ${isAdmin? `<div><button class="edit-btn" data-id="${item.id}">编辑</button><button class="delete-btn" data-id="${item.id}">删除</button></div>` : ''}
+                    </div>
+                    <div style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.5rem;">
+                        <span class="detail-badge">${statusBadge}</span>
+                        <span class="detail-badge">📅 月预算:${item.monthBudget||'-'}</span>
+                        <span class="detail-badge">⏰ 上车:${item.joinTime||'-'}</span>
+                        <span class="detail-badge">📸 发图:${item.aaImgSent?'✅':'❌'}</span>
+                        <span class="detail-badge">💾 存图:${item.aaImgSaved?'✅':'❌'}</span>
+                    </div>
+                    ${aaHtml}
+                    ${remarkHtml}
+                </div>`;
     }
 
     function renderFriendGift(gift) {
         if (!gift || !gift.hasGift) return '';
-        let versions = gift.versions?.map(v => `<div>✨ ${v.version} 截止${v.deadline} 份数${v.copies} 图:${v.imageUrl||'无'}</div>`).join('');
-        return `<div class="detail-tag" style="background:#fef9e3;">🎁友情赠:${versions}</div>`;
+        let versionsHtml = '';
+        if (gift.versions) {
+            versionsHtml = gift.versions.map(v => {
+                let recipientsHtml = '';
+                if (v.recipients && v.recipients.length) {
+                    recipientsHtml = `<div style="margin-top:4px;"><strong>🎁 赠送对象：</strong> ${v.recipients.join(', ')}</div>`;
+                }
+                return `<div><strong>✨ ${v.version}</strong> 截止${v.deadline} 份数${v.copies} 图:${v.imageUrl||'无'} ${recipientsHtml}</div>`;
+            }).join('');
+        }
+        return `<div class="friend-gift">🎁友情赠:${versionsHtml}</div>`;
     }
 
     async function deleteItem(id) {
@@ -293,10 +452,30 @@
         if(item) openFormModal(item);
     }
 
+    // 动态生成友情赠版本内按份数生成被赠送人输入框
+    function attachRecipientsLogic(modalDiv) {
+        const versionContainers = modalDiv.querySelectorAll('.version-recipients-area');
+        versionContainers.forEach((container, idx) => {
+            const copiesInput = container.parentElement.querySelector('.version-copies');
+            if (!copiesInput) return;
+            const refreshRecipients = () => {
+                let copies = parseInt(copiesInput.value) || 0;
+                if (copies < 0) copies = 0;
+                let innerHtml = '';
+                for (let i = 0; i < copies; i++) {
+                    innerHtml += `<input type="text" class="recipient-name" placeholder="被赠送人 ${i+1}" style="margin-bottom:4px;">`;
+                }
+                container.innerHTML = innerHtml;
+            };
+            copiesInput.addEventListener('input', refreshRecipients);
+            refreshRecipients();
+        });
+    }
+
     function openFormModal(editItem) {
         const isEdit = !!editItem;
         const modalDiv = document.createElement('div'); modalDiv.className = 'modal';
-        let formHtml = `<div class="modal-content"><h3>${isEdit?'编辑':'新增'} ${catNameMap[currentCategory]}</h3>`;
+        let formHtml = `<div class="modal-content"><h3>${isEdit?'编辑':'新增'} ${allCategories.find(c=>c.id===currentCategory)?.name}</h3>`;
         if (currentCategory === 'watermark_club') formHtml += generateWatermarkClubForm(editItem);
         else if (currentCategory === 'watermark_car') formHtml += generateWatermarkCarForm(editItem);
         else if (currentCategory === 'design_car') formHtml += generateDesignCarForm(editItem);
@@ -305,25 +484,28 @@
         modalDiv.innerHTML = formHtml;
         document.body.appendChild(modalDiv);
 
-        // 动态显示单标群相关字段
+        // 动态单标群
         if (currentCategory === 'watermark_club') {
             const sel = modalDiv.querySelector('#sendMethod');
             const groupDiv = modalDiv.querySelector('#singleGroupFields');
             const toggle = () => groupDiv.style.display = sel.value === '单标群' ? 'block' : 'none';
             sel.addEventListener('change', toggle); toggle();
         }
-        // 友情赠版本添加按钮
+        // 友情赠版本动态添加及被赠送人逻辑
         if (['watermark_club','watermark_car'].includes(currentCategory)) {
             const addBtn = modalDiv.querySelector('#addVersionBtn');
             if (addBtn) {
                 addBtn.addEventListener('click', () => {
                     const container = modalDiv.querySelector('#versionsContainer');
                     const idx = container.children.length;
-                    const div = document.createElement('div'); div.className = 'form-row';
-                    div.innerHTML = `<input placeholder="版本名" name="ver_name_${idx}"><input placeholder="截止日期" name="ver_deadline_${idx}"><input placeholder="份数" name="ver_copies_${idx}"><input placeholder="图片URL" name="ver_img_${idx}">`;
+                    const div = document.createElement('div'); div.className = 'version-item';
+                    div.innerHTML = `<div class="form-row"><input placeholder="版本名" class="version-name"><input placeholder="截止日期" class="version-deadline"><input placeholder="份数" class="version-copies" type="number" min="0" value="0"><input placeholder="图片URL" class="version-img"></div>
+                                    <div class="recipients-input version-recipients-area"></div><hr>`;
                     container.appendChild(div);
+                    attachRecipientsLogic(modalDiv);
                 });
             }
+            attachRecipientsLogic(modalDiv);
         }
         // 设车动态AA
         if (currentCategory === 'design_car') {
@@ -331,7 +513,6 @@
             if (addAaBtn) {
                 addAaBtn.addEventListener('click', () => {
                     const container = modalDiv.querySelector('#aaListArea');
-                    const idx = container.children.length;
                     const div = document.createElement('div'); div.className = 'aa-row form-row';
                     div.innerHTML = `<input class="aa-name" placeholder="名称"><input class="aa-amount" placeholder="金额"><input class="aa-time" placeholder="时间"><label><input class="aa-img-sent" type="checkbox"> 发图</label><label><input class="aa-img-saved" type="checkbox"> 存图</label>`;
                     container.appendChild(div);
@@ -359,15 +540,18 @@
             let friendGift = { hasGift: false };
             if (hasGift) {
                 const versions = [];
-                const versionDivs = modalDiv.querySelectorAll('#versionsContainer .form-row');
-                versionDivs.forEach((div, idx) => {
-                    const verName = div.querySelector(`input[name="ver_name_${idx}"]`)?.value;
-                    if(verName) versions.push({
-                        version: verName,
-                        deadline: div.querySelector(`input[name="ver_deadline_${idx}"]`)?.value || '',
-                        copies: div.querySelector(`input[name="ver_copies_${idx}"]`)?.value || '',
-                        imageUrl: div.querySelector(`input[name="ver_img_${idx}"]`)?.value || ''
-                    });
+                const versionDivs = modalDiv.querySelectorAll('#versionsContainer .version-item');
+                versionDivs.forEach(div => {
+                    const version = div.querySelector('.version-name')?.value;
+                    if (version) {
+                        const deadline = div.querySelector('.version-deadline')?.value || '';
+                        const copies = parseInt(div.querySelector('.version-copies')?.value) || 0;
+                        const imageUrl = div.querySelector('.version-img')?.value || '';
+                        const recipients = [];
+                        const recipientInputs = div.querySelectorAll('.recipient-name');
+                        recipientInputs.forEach(inp => { if(inp.value) recipients.push(inp.value); });
+                        versions.push({ version, deadline, copies, imageUrl, recipients });
+                    }
                 });
                 friendGift = { hasGift: true, versions };
             }
@@ -383,6 +567,9 @@
                 price: modalDiv.querySelector('#price').value,
                 form: modalDiv.querySelector('#form').value,
                 isFormFilled: modalDiv.querySelector('#isFormFilled').checked,
+                isCompleted: modalDiv.querySelector('#isCompleted').checked,
+                isImageStored: modalDiv.querySelector('#isImageStored').checked,
+                remark: modalDiv.querySelector('#remark')?.value || '',
                 sendMethod,
                 ...extra,
                 friendGift
@@ -393,15 +580,18 @@
             let friendGift = { hasGift: false };
             if (hasGift) {
                 const versions = [];
-                const versionDivs = modalDiv.querySelectorAll('#versionsContainer .form-row');
-                versionDivs.forEach((div, idx) => {
-                    const verName = div.querySelector(`input[name="ver_name_${idx}"]`)?.value;
-                    if(verName) versions.push({
-                        version: verName,
-                        deadline: div.querySelector(`input[name="ver_deadline_${idx}"]`)?.value || '',
-                        copies: div.querySelector(`input[name="ver_copies_${idx}"]`)?.value || '',
-                        imageUrl: div.querySelector(`input[name="ver_img_${idx}"]`)?.value || ''
-                    });
+                const versionDivs = modalDiv.querySelectorAll('#versionsContainer .version-item');
+                versionDivs.forEach(div => {
+                    const version = div.querySelector('.version-name')?.value;
+                    if (version) {
+                        const deadline = div.querySelector('.version-deadline')?.value || '';
+                        const copies = parseInt(div.querySelector('.version-copies')?.value) || 0;
+                        const imageUrl = div.querySelector('.version-img')?.value || '';
+                        const recipients = [];
+                        const recipientInputs = div.querySelectorAll('.recipient-name');
+                        recipientInputs.forEach(inp => { if(inp.value) recipients.push(inp.value); });
+                        versions.push({ version, deadline, copies, imageUrl, recipients });
+                    }
                 });
                 friendGift = { hasGift: true, versions };
             }
@@ -412,6 +602,9 @@
                 isPaid: modalDiv.querySelector('#isPaid').checked,
                 isFormFilled: modalDiv.querySelector('#isFormFilled').checked,
                 isShipped: modalDiv.querySelector('#isShipped').checked,
+                isCompleted: modalDiv.querySelector('#isCompleted').checked,
+                isImageStored: modalDiv.querySelector('#isImageStored').checked,
+                remark: modalDiv.querySelector('#remark')?.value || '',
                 friendGift
             };
         }
@@ -433,7 +626,9 @@
                 joinTime: modalDiv.querySelector('#joinTime').value,
                 aaItems,
                 aaImgSent: modalDiv.querySelector('#aaImgSent').checked,
-                aaImgSaved: modalDiv.querySelector('#aaImgSaved').checked
+                aaImgSaved: modalDiv.querySelector('#aaImgSaved').checked,
+                carStatus: modalDiv.querySelector('input[name="carStatus"]:checked')?.value || 'on',
+                remark: modalDiv.querySelector('#remark')?.value || ''
             };
         }
         else {
@@ -443,33 +638,98 @@
                 form: modalDiv.querySelector('#form').value,
                 isFormFilled: modalDiv.querySelector('#isFormFilled').checked,
                 isGroupInvited: modalDiv.querySelector('#isGroupInvited').checked,
-                isJoined: modalDiv.querySelector('#isJoined').checked
+                isJoined: modalDiv.querySelector('#isJoined').checked,
+                isCompleted: modalDiv.querySelector('#isCompleted').checked,
+                isImageStored: modalDiv.querySelector('#isImageStored').checked,
+                remark: modalDiv.querySelector('#remark')?.value || ''
             };
         }
     }
 
-    // 生成表单HTML (完整)
-    function generateWatermarkClubForm(edit) { return `<div class="form-group"><label>名称*</label><input id="name" value="${edit?.name||''}"></div><div class="form-row"><div><label>价格</label><input id="price" value="${edit?.price||''}"></div><div><label>形式</label><input id="form" value="${edit?.form||''}"></div></div><div><label><input type="checkbox" id="isFormFilled" ${edit?.isFormFilled?'checked':''}> 是否填表</label></div><div><label>发图方式</label><select id="sendMethod"><option>邮箱网盘</option><option ${edit?.sendMethod==='单标群'?'selected':''}>单标群</option></select></div><div id="singleGroupFields" style="display:none; margin-top:8px;"><label><input type="checkbox" id="invited" ${edit?.invited?'checked':''}> 邀请</label><label><input type="checkbox" id="joinedGroup" ${edit?.joinedGroup?'checked':''}> 进群</label><label><input type="checkbox" id="locked" ${edit?.locked?'checked':''}> 锁群</label><label><input type="checkbox" id="isManager" ${edit?.isManager?'checked':''}> 设为管理</label></div><hr><label><input type="checkbox" id="hasGift" ${edit?.friendGift?.hasGift?'checked':''}> 友情赠</label><div id="versionsContainer"></div><button type="button" id="addVersionBtn">+ 增加版本</button>`; }
-    function generateWatermarkCarForm(edit) { return `<div><label>名称</label><input id="name" value="${edit?.name||''}"></div><div class="form-row"><div><label>价格</label><input id="price" value="${edit?.price||''}"></div><div><label>风格</label><input id="style" value="${edit?.style||''}"></div></div><div><label><input type="checkbox" id="isPaid" ${edit?.isPaid?'checked':''}> 付钱</label><label><input type="checkbox" id="isFormFilled" ${edit?.isFormFilled?'checked':''}> 填表</label><label><input type="checkbox" id="isShipped" ${edit?.isShipped?'checked':''}> 发货</label></div><hr><label><input type="checkbox" id="hasGift" ${edit?.friendGift?.hasGift?'checked':''}> 友情赠</label><div id="versionsContainer"></div><button id="addVersionBtn">+ 增加版本</button>`; }
-    function generateDesignCarForm(edit) { return `<div><label>小分类</label><input id="subCategoryName" value="${edit?.subCategoryName||''}"></div><div><label>名称</label><input id="name" value="${edit?.name||''}"></div><div class="form-row"><div><label>月预算</label><input id="monthBudget" value="${edit?.monthBudget||''}"></div><div><label>上车时间</label><input id="joinTime" value="${edit?.joinTime||''}"></div></div><div id="aaListArea">${(edit?.aaItems||[]).map((aa,i)=>`<div class="aa-row form-row"><input class="aa-name" placeholder="名称" value="${aa.name}"><input class="aa-amount" placeholder="金额" value="${aa.amount}"><input class="aa-time" placeholder="时间" value="${aa.time}"><label><input class="aa-img-sent" type="checkbox" ${aa.isImgSent?'checked':''}> 发图</label><label><input class="aa-img-saved" type="checkbox" ${aa.isImgSaved?'checked':''}> 存图</label></div>`).join('')}</div><button type="button" id="addAaBtn">+ 增加AA项</button><div><label><input type="checkbox" id="aaImgSent" ${edit?.aaImgSent?'checked':''}> 整体是否发图</label><label><input type="checkbox" id="aaImgSaved" ${edit?.aaImgSaved?'checked':''}> 整体是否存图</label></div>`; }
-    function generateOriginalClubForm(edit) { return `<div><label>名称</label><input id="name" value="${edit?.name||''}"></div><div><label>金额</label><input id="amount" value="${edit?.amount||''}"></div><div><label>形式</label><input id="form" value="${edit?.form||''}"></div><div><label><input type="checkbox" id="isFormFilled" ${edit?.isFormFilled?'checked':''}> 填表</label><label><input type="checkbox" id="isGroupInvited" ${edit?.isGroupInvited?'checked':''}> 拉群</label><label><input type="checkbox" id="isJoined" ${edit?.isJoined?'checked':''}> 进群</label></div>`; }
+    // 表单生成器（含备注字段）
+    function generateWatermarkClubForm(edit) {
+        return `<div><label>名称 *</label><input id="name" value="${edit?.name||''}"></div>
+        <div class="form-row"><div><label>价格</label><input id="price" value="${edit?.price||''}"></div><div><label>形式</label><input id="form" value="${edit?.form||''}"></div></div>
+        <div class="checkbox-group"><label><input type="checkbox" id="isFormFilled" ${edit?.isFormFilled?'checked':''}> 填表</label>
+        <label><input type="checkbox" id="isCompleted" ${edit?.isCompleted?'checked':''}> 完结</label>
+        <label><input type="checkbox" id="isImageStored" ${edit?.isImageStored?'checked':''}> 存图</label></div>
+        <div><label>发图方式</label><select id="sendMethod"><option>邮箱网盘</option><option ${edit?.sendMethod==='单标群'?'selected':''}>单标群</option></select></div>
+        <div id="singleGroupFields" style="display:none;"><div class="checkbox-group"><label><input type="checkbox" id="invited" ${edit?.invited?'checked':''}> 邀请</label><label><input type="checkbox" id="joinedGroup" ${edit?.joinedGroup?'checked':''}> 进群</label><label><input type="checkbox" id="locked" ${edit?.locked?'checked':''}> 锁群</label><label><input type="checkbox" id="isManager" ${edit?.isManager?'checked':''}> 管理</label></div></div>
+        <div><label>备注</label><textarea id="remark" rows="2">${edit?.remark||''}</textarea></div>
+        <hr><label><input type="checkbox" id="hasGift" ${edit?.friendGift?.hasGift?'checked':''}> 友情赠</label><div id="versionsContainer"></div><button type="button" id="addVersionBtn">+ 增加版本</button>`;
+    }
+    function generateWatermarkCarForm(edit) {
+        return `<div><label>名称</label><input id="name" value="${edit?.name||''}"></div>
+        <div class="form-row"><div><label>价格</label><input id="price" value="${edit?.price||''}"></div><div><label>风格</label><input id="style" value="${edit?.style||''}"></div></div>
+        <div class="checkbox-group"><label><input type="checkbox" id="isPaid" ${edit?.isPaid?'checked':''}> 付钱</label><label><input type="checkbox" id="isFormFilled" ${edit?.isFormFilled?'checked':''}> 填表</label><label><input type="checkbox" id="isShipped" ${edit?.isShipped?'checked':''}> 发货</label><label><input type="checkbox" id="isCompleted" ${edit?.isCompleted?'checked':''}> 完结</label><label><input type="checkbox" id="isImageStored" ${edit?.isImageStored?'checked':''}> 存图</label></div>
+        <div><label>备注</label><textarea id="remark" rows="2">${edit?.remark||''}</textarea></div>
+        <hr><label><input type="checkbox" id="hasGift" ${edit?.friendGift?.hasGift?'checked':''}> 友情赠</label><div id="versionsContainer"></div><button id="addVersionBtn">+ 增加版本</button>`;
+    }
+    function generateDesignCarForm(edit) {
+        return `<div><label>小分类</label><input id="subCategoryName" value="${edit?.subCategoryName||''}"></div>
+        <div><label>名称</label><input id="name" value="${edit?.name||''}"></div>
+        <div class="form-row"><div><label>月预算</label><input id="monthBudget" value="${edit?.monthBudget||''}"></div><div><label>上车时间</label><input id="joinTime" value="${edit?.joinTime||''}"></div></div>
+        <div class="checkbox-group"><label>状态：</label><label><input type="radio" name="carStatus" value="on" ${edit?.carStatus==='on'||!edit?.carStatus?'checked':''}> 在车</label><label><input type="radio" name="carStatus" value="off" ${edit?.carStatus==='off'?'checked':''}> 下车</label></div>
+        <div id="aaListArea">${(edit?.aaItems||[]).map((aa,i)=>`<div class="aa-row form-row"><input class="aa-name" placeholder="名称" value="${aa.name}"><input class="aa-amount" placeholder="金额" value="${aa.amount}"><input class="aa-time" placeholder="时间" value="${aa.time}"><label><input class="aa-img-sent" type="checkbox" ${aa.isImgSent?'checked':''}> 发图</label><label><input class="aa-img-saved" type="checkbox" ${aa.isImgSaved?'checked':''}> 存图</label></div>`).join('')}</div>
+        <button type="button" id="addAaBtn">+ 增加AA项</button>
+        <div class="checkbox-group"><label><input type="checkbox" id="aaImgSent" ${edit?.aaImgSent?'checked':''}> 整体发图</label><label><input type="checkbox" id="aaImgSaved" ${edit?.aaImgSaved?'checked':''}> 整体存图</label></div>
+        <div><label>备注</label><textarea id="remark" rows="2">${edit?.remark||''}</textarea></div>`;
+    }
+    function generateOriginalClubForm(edit) {
+        return `<div><label>名称</label><input id="name" value="${edit?.name||''}"></div>
+        <div><label>金额</label><input id="amount" value="${edit?.amount||''}"></div>
+        <div><label>形式</label><input id="form" value="${edit?.form||''}"></div>
+        <div class="checkbox-group"><label><input type="checkbox" id="isFormFilled" ${edit?.isFormFilled?'checked':''}> 填表</label><label><input type="checkbox" id="isGroupInvited" ${edit?.isGroupInvited?'checked':''}> 拉群</label><label><input type="checkbox" id="isJoined" ${edit?.isJoined?'checked':''}> 进群</label><label><input type="checkbox" id="isCompleted" ${edit?.isCompleted?'checked':''}> 完结</label><label><input type="checkbox" id="isImageStored" ${edit?.isImageStored?'checked':''}> 存图</label></div>
+        <div><label>备注</label><textarea id="remark" rows="2">${edit?.remark||''}</textarea></div>`;
+    }
 
     function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
 
+    function renderSettingsPanel() {
+        const panel = document.getElementById('settingsPanel');
+        if (!isAdmin) { panel.style.display = 'none'; return; }
+        panel.style.display = 'block';
+        panel.innerHTML = `<div class="settings-panel" style="background:white; border-radius:24px; padding:1rem;">
+            <div class="settings-title">⚙️ 分类显示控制</div>
+            <div class="category-switch" style="display:flex; gap:1rem; flex-wrap:wrap;">
+                ${allCategories.map(cat => `<label><input type="checkbox" class="cat-hide-checkbox" data-cat="${cat.id}" ${settings.hiddenCategories.includes(cat.id) ? '' : 'checked'}> ${cat.name}</label>`).join('')}
+                <button id="saveCategoryVisibility" class="admin-btn" style="background:#2c7a4d;">保存可见性</button>
+            </div>
+        </div>`;
+        document.getElementById('saveCategoryVisibility').onclick = () => {
+            const newHidden = [];
+            document.querySelectorAll('.cat-hide-checkbox').forEach(cb => { if (!cb.checked) newHidden.push(cb.dataset.cat); });
+            saveSettings({ ...settings, hiddenCategories: newHidden });
+        };
+    }
+
     document.getElementById('toggleAdminBtn').onclick = () => {
-        if(!isAdmin) { if(prompt('管理员密码:') === '001128') { isAdmin=true; document.getElementById('authStatus').innerHTML='👑 管理员模式 · 可编辑'; document.getElementById('addItemBtn').style.display='flex'; renderCurrentView(); } else alert('密码错误'); }
-        else { isAdmin=false; document.getElementById('authStatus').innerHTML='👤 访客模式 · 只读'; document.getElementById('addItemBtn').style.display='none'; renderCurrentView(); }
+        if(!isAdmin) { 
+            const pwd = prompt('管理员密码:');
+            if(pwd === '001128') { 
+                isAdmin=true; 
+                document.getElementById('authStatus').innerHTML='👑 管理员模式 · 可编辑'; 
+                document.getElementById('addItemBtn').style.display='flex';
+                document.getElementById('openSettingsBtn').style.display='flex';
+                renderSettingsPanel();
+                renderCurrentView(); 
+            } else alert('密码错误');
+        } else {
+            isAdmin=false; 
+            document.getElementById('authStatus').innerHTML='👤 访客模式 · 只读'; 
+            document.getElementById('addItemBtn').style.display='none';
+            document.getElementById('openSettingsBtn').style.display='none';
+            document.getElementById('settingsPanel').style.display='none';
+            renderCurrentView();
+        }
     };
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.onclick = () => {
-        document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-        btn.classList.add('active');
-        currentCategory = btn.dataset.cat;
-        document.getElementById('categoryTitle').innerText = catNameMap[currentCategory];
+    document.getElementById('openSettingsBtn').onclick = () => { if(isAdmin) renderSettingsPanel(); };
+    (async () => {
+        await loadSettings();
+        await loadAllData();
         document.getElementById('addItemBtn').style.display = isAdmin ? 'flex' : 'none';
-        renderCurrentView();
-    });
-    document.getElementById('addItemBtn').onclick = openAddModal;
-    loadAllData();
+        document.getElementById('openSettingsBtn').style.display = isAdmin ? 'flex' : 'none';
+    })();
 </script>
 </body>
 </html>
