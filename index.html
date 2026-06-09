@@ -8,7 +8,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-            background: #eef2fa;
+            background: #f0f4fa;  /* 浅雾蓝背景 */
             color: #1f3a4c;
             padding: 2rem 1.5rem;
         }
@@ -279,6 +279,7 @@
         textarea { resize: vertical; }
         .form-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.8rem; }
         .checkbox-group { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; }
+        .radio-group { display: flex; gap: 1rem; align-items: center; }
         .modal-buttons { display: flex; justify-content: flex-end; gap: 0.8rem; margin-top: 1.8rem; }
         .secondary { background: #e2eaf5; border: none; padding: 0.5rem 1rem; border-radius: 30px; cursor: pointer; color: #2c5a7a; }
         .empty-state { text-align: center; padding: 3rem; color: #9bb7d0; }
@@ -521,24 +522,29 @@
         const list = itemsData.exchanged || [];
         const sorted = [...list].sort((a,b) => (a.name || '').localeCompare(b.name || ''));
         const container = document.getElementById('itemsListContainer');
-        if (!sorted.length) {
-            container.innerHTML = '<div class="empty-state">暂无已换到记录，管理员可点击新增。</div>';
-            return;
-        }
         let html = `<div class="items-grid">`;
-        sorted.forEach(item => {
-            html += `
-                <div class="item-card">
-                    <div class="item-title">
-                        <span class="item-name">📌 ${escapeHtml(item.name)}</span>
-                        ${isAdmin ? `<div><button class="edit-btn" data-id="${item.id}">编辑</button><button class="delete-btn" data-id="${item.id}">删除</button></div>` : ''}
+        if (isAdmin) {
+            html += `<div style="margin-bottom: 1rem;"><button id="addExchangedBtn" class="add-btn">➕ 新增已换到</button></div>`;
+        }
+        if (!sorted.length) {
+            html += `<div class="empty-state">暂无已换到记录，管理员可点击上方按钮新增。</div>`;
+        } else {
+            sorted.forEach(item => {
+                html += `
+                    <div class="item-card">
+                        <div class="item-title">
+                            <span class="item-name">📌 ${escapeHtml(item.name)}</span>
+                            ${isAdmin ? `<div><button class="edit-btn" data-id="${item.id}">编辑</button><button class="delete-btn" data-id="${item.id}">删除</button></div>` : ''}
+                        </div>
                     </div>
-                </div>
-            `;
-        });
+                `;
+            });
+        }
         html += `</div>`;
         container.innerHTML = html;
         if (isAdmin) {
+            const addBtn = document.getElementById('addExchangedBtn');
+            if (addBtn) addBtn.onclick = () => openExchangedModal(null);
             document.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', (e) => openExchangedModal(parseInt(btn.dataset.id))));
             document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', async (e) => { if(confirm('删除？')) await deleteExchanged(parseInt(btn.dataset.id)); }));
         }
@@ -594,7 +600,6 @@
         }
     }
 
-    // 高亮条件：未存图不再高亮
     function isWarningItem(item, cat) {
         if (cat === 'watermark_club') {
             if (!item.isFormFilled) return true;
@@ -653,7 +658,6 @@
     }
 
     function renderDesignCarCard(item) {
-        // 取消卡片高亮，改为表格内警告
         let aaHtml = '';
         if (item.aaItems && item.aaItems.length) {
             let tableRows = '';
@@ -670,7 +674,7 @@
             aaHtml = `<table class="aa-table">
                         <thead><tr><th>名称</th><th>金额</th><th>时间</th><th>发图</th><th>存图</th></tr></thead>
                         <tbody>${tableRows}</tbody>
-                      </table>`;
+                       </table>`;
         }
         const statusBadge = item.carStatus === 'on' ? '🚗 在车' : '🚫 下车';
         const remarkHtml = item.remark ? `<div class="remark-text">📝 备注：${escapeHtml(item.remark)}</div>` : '';
@@ -683,8 +687,6 @@
                         <span class="detail-badge">${statusBadge}</span>
                         <span class="detail-badge">📅 月预算:${item.monthBudget||'-'}</span>
                         <span class="detail-badge">⏰ 上车:${item.joinTime||'-'}</span>
-                        <span class="detail-badge">📸 整体发图:${item.aaImgSent?'✅':'❌'}</span>
-                        <span class="detail-badge">💾 整体存图:${item.aaImgSaved?'✅':'❌'}</span>
                     </div>
                     ${aaHtml}
                     ${remarkHtml}
@@ -719,7 +721,6 @@
         if(item) openFormModal(item);
     }
 
-    // 编辑时回填友情赠版本和被赠送人
     function attachRecipientsLogic(modalDiv, existingVersions = null) {
         const versionContainers = modalDiv.querySelectorAll('.version-item');
         versionContainers.forEach((container, idx) => {
@@ -730,7 +731,6 @@
                 let copies = parseInt(copiesInput.value) || 0;
                 if (copies < 0) copies = 0;
                 let innerHtml = '';
-                // 尝试从 existingVersions 中获取当前版本的已有 recipients
                 let existingRecipients = [];
                 if (existingVersions && existingVersions[idx]) {
                     existingRecipients = existingVersions[idx].recipients || [];
@@ -765,10 +765,31 @@
             sel.addEventListener('change', toggle); toggle();
         }
         if (['watermark_club','watermark_car'].includes(currentCategory)) {
-            // 获取已有的友情赠版本（用于回填）
+            // 友情赠有无选项切换逻辑
+            const giftHasRadio = modalDiv.querySelector('input[name="giftHas"][value="有"]');
+            const giftHasNotRadio = modalDiv.querySelector('input[name="giftHas"][value="无"]');
+            const versionsContainer = modalDiv.querySelector('#versionsContainer');
+            const toggleGiftFields = () => {
+                if (giftHasRadio.checked) {
+                    versionsContainer.style.display = 'block';
+                    document.querySelector('#addVersionBtn').style.display = 'inline-block';
+                } else {
+                    versionsContainer.style.display = 'none';
+                    document.querySelector('#addVersionBtn').style.display = 'none';
+                }
+            };
+            giftHasRadio.addEventListener('change', toggleGiftFields);
+            giftHasNotRadio.addEventListener('change', toggleGiftFields);
+            toggleGiftFields();
+
             let existingVersions = null;
             if (editItem && editItem.friendGift && editItem.friendGift.hasGift) {
                 existingVersions = editItem.friendGift.versions;
+                giftHasRadio.checked = true;
+                toggleGiftFields();
+            } else {
+                giftHasNotRadio.checked = true;
+                toggleGiftFields();
             }
             const addBtn = modalDiv.querySelector('#addVersionBtn');
             if (addBtn) {
@@ -781,7 +802,6 @@
                     attachRecipientsLogic(modalDiv, existingVersions);
                 });
             }
-            // 如果已有版本，动态生成版本条目
             if (existingVersions && existingVersions.length) {
                 const container = modalDiv.querySelector('#versionsContainer');
                 container.innerHTML = '';
@@ -822,9 +842,9 @@
 
     function collectFormData(modalDiv) {
         if (currentCategory === 'watermark_club') {
-            const hasGift = modalDiv.querySelector('#hasGift').checked;
+            const giftHas = modalDiv.querySelector('input[name="giftHas"]:checked')?.value;
             let friendGift = { hasGift: false };
-            if (hasGift) {
+            if (giftHas === '有') {
                 const versions = [];
                 const versionDivs = modalDiv.querySelectorAll('#versionsContainer .version-item');
                 versionDivs.forEach(div => {
@@ -862,9 +882,9 @@
             };
         }
         else if (currentCategory === 'watermark_car') {
-            const hasGift = modalDiv.querySelector('#hasGift').checked;
+            const giftHas = modalDiv.querySelector('input[name="giftHas"]:checked')?.value;
             let friendGift = { hasGift: false };
-            if (hasGift) {
+            if (giftHas === '有') {
                 const versions = [];
                 const versionDivs = modalDiv.querySelectorAll('#versionsContainer .version-item');
                 versionDivs.forEach(div => {
@@ -904,12 +924,10 @@
                 });
             });
             return {
-                name: modalDiv.querySelector('#name').value,  // 合并了小分类和名称
+                name: modalDiv.querySelector('#name').value,
                 monthBudget: modalDiv.querySelector('#monthBudget').value,
                 joinTime: modalDiv.querySelector('#joinTime').value,
                 aaItems,
-                aaImgSent: modalDiv.querySelector('#aaImgSent').checked,
-                aaImgSaved: modalDiv.querySelector('#aaImgSaved').checked,
                 carStatus: modalDiv.querySelector('input[name="carStatus"]:checked')?.value || 'on',
                 remark: modalDiv.querySelector('#remark')?.value || ''
             };
@@ -930,6 +948,7 @@
     }
 
     function generateWatermarkClubForm(edit) {
+        const hasGift = edit?.friendGift?.hasGift || false;
         return `<div><label>名称 *</label><input id="name" value="${edit?.name||''}"></div>
         <div class="form-row"><div><label>价格</label><input id="price" value="${edit?.price||''}"></div><div><label>形式</label><input id="form" value="${edit?.form||''}"></div></div>
         <div class="checkbox-group"><label><input type="checkbox" id="isFormFilled" ${edit?.isFormFilled?'checked':''}> 填表</label>
@@ -938,14 +957,17 @@
         <div><label>发图方式</label><select id="sendMethod"><option>邮箱网盘</option><option ${edit?.sendMethod==='单标群'?'selected':''}>单标群</option></select></div>
         <div id="singleGroupFields" style="display:none;"><div class="checkbox-group"><label><input type="checkbox" id="invited" ${edit?.invited?'checked':''}> 邀请</label><label><input type="checkbox" id="joinedGroup" ${edit?.joinedGroup?'checked':''}> 进群</label><label><input type="checkbox" id="locked" ${edit?.locked?'checked':''}> 锁群</label><label><input type="checkbox" id="isManager" ${edit?.isManager?'checked':''}> 管理</label></div></div>
         <div><label>备注</label><textarea id="remark" rows="2">${edit?.remark||''}</textarea></div>
-        <hr><label><input type="checkbox" id="hasGift" ${edit?.friendGift?.hasGift?'checked':''}> 友情赠</label><div id="versionsContainer"></div><button type="button" id="addVersionBtn" class="add-btn" style="background:#e2eaf5; color:#2c5a7a; margin-top:0.5rem;">+ 增加版本</button>`;
+        <hr><div class="radio-group"><label>友情赠：</label><label><input type="radio" name="giftHas" value="有" ${hasGift ? 'checked' : ''}> 有</label><label><input type="radio" name="giftHas" value="无" ${!hasGift ? 'checked' : ''}> 无</label></div>
+        <div id="versionsContainer" style="display: none;"></div><button type="button" id="addVersionBtn" class="add-btn" style="background:#e2eaf5; color:#2c5a7a; margin-top:0.5rem; display: none;">+ 增加版本</button>`;
     }
     function generateWatermarkCarForm(edit) {
+        const hasGift = edit?.friendGift?.hasGift || false;
         return `<div><label>名称</label><input id="name" value="${edit?.name||''}"></div>
         <div class="form-row"><div><label>价格</label><input id="price" value="${edit?.price||''}"></div><div><label>风格</label><input id="style" value="${edit?.style||''}"></div></div>
         <div class="checkbox-group"><label><input type="checkbox" id="isPaid" ${edit?.isPaid?'checked':''}> 付钱</label><label><input type="checkbox" id="isFormFilled" ${edit?.isFormFilled?'checked':''}> 填表</label><label><input type="checkbox" id="isImageSent" ${edit?.isImageSent?'checked':''}> 发图</label></div>
         <div><label>备注</label><textarea id="remark" rows="2">${edit?.remark||''}</textarea></div>
-        <hr><label><input type="checkbox" id="hasGift" ${edit?.friendGift?.hasGift?'checked':''}> 友情赠</label><div id="versionsContainer"></div><button id="addVersionBtn" class="add-btn" style="background:#e2eaf5; color:#2c5a7a; margin-top:0.5rem;">+ 增加版本</button>`;
+        <hr><div class="radio-group"><label>友情赠：</label><label><input type="radio" name="giftHas" value="有" ${hasGift ? 'checked' : ''}> 有</label><label><input type="radio" name="giftHas" value="无" ${!hasGift ? 'checked' : ''}> 无</label></div>
+        <div id="versionsContainer" style="display: none;"></div><button id="addVersionBtn" class="add-btn" style="background:#e2eaf5; color:#2c5a7a; margin-top:0.5rem; display: none;">+ 增加版本</button>`;
     }
     function generateDesignCarForm(edit) {
         return `<div><label>名称 *</label><input id="name" value="${edit?.name||''}"></div>
@@ -953,7 +975,6 @@
         <div class="checkbox-group"><label>状态：</label><label><input type="radio" name="carStatus" value="on" ${edit?.carStatus==='on'||!edit?.carStatus?'checked':''}> 在车</label><label><input type="radio" name="carStatus" value="off" ${edit?.carStatus==='off'?'checked':''}> 下车</label></div>
         <div id="aaListArea">${(edit?.aaItems||[]).map((aa,i)=>`<div class="aa-row form-row"><input class="aa-name" placeholder="名称" value="${aa.name}"><input class="aa-amount" placeholder="金额" value="${aa.amount}"><input class="aa-time" placeholder="时间" value="${aa.time}"><label><input class="aa-img-sent" type="checkbox" ${aa.isImgSent?'checked':''}> 发图</label><label><input class="aa-img-saved" type="checkbox" ${aa.isImgSaved?'checked':''}> 存图</label></div>`).join('')}</div>
         <button type="button" id="addAaBtn" class="add-btn" style="background:#e2eaf5; color:#2c5a7a; margin-top:0.5rem;">+ 增加AA项</button>
-        <div class="checkbox-group"><label><input type="checkbox" id="aaImgSent" ${edit?.aaImgSent?'checked':''}> 整体发图</label><label><input type="checkbox" id="aaImgSaved" ${edit?.aaImgSaved?'checked':''}> 整体存图</label></div>
         <div><label>备注</label><textarea id="remark" rows="2">${edit?.remark||''}</textarea></div>`;
     }
     function generateOriginalClubForm(edit) {
@@ -985,7 +1006,6 @@
         };
     }
 
-    // 自定义密码输入
     function showPasswordModal(callback) {
         const modal = document.getElementById('passwordModal');
         const input = document.getElementById('adminPasswordInput');
@@ -1008,7 +1028,6 @@
         };
         document.getElementById('pwdConfirmBtn').addEventListener('click', onConfirm);
         document.getElementById('pwdCancelBtn').addEventListener('click', onCancel);
-        // 回车确认
         input.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') onConfirm();
         }, { once: true });
