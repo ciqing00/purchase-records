@@ -19,15 +19,14 @@
             align-items: baseline;
             flex-wrap: wrap;
             gap: 1rem;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
             border-bottom: 2px solid rgba(79, 125, 158, 0.2);
         }
         .title-group {
             display: flex;
-            align-items: baseline;
-            gap: 0.6rem;
-            flex-wrap: wrap;
+            flex-direction: column;
+            gap: 0.2rem;
         }
         h1 {
             font-size: 2rem;
@@ -41,6 +40,12 @@
             font-size: 0.85rem;
             color: #9bb7d0;
             font-weight: normal;
+        }
+        .performance-note {
+            font-size: 0.7rem;
+            color: #c45a5a;
+            margin-top: 0.2rem;
+            font-style: italic;
         }
         .auth-badge {
             background: rgba(255,255,255,0.7);
@@ -327,6 +332,21 @@
             flex: 3;
             min-width: 150px;
         }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            color: white;
+            font-size: 1.2rem;
+            backdrop-filter: blur(4px);
+        }
         @media (max-width: 640px) { body { padding: 1rem; } }
     </style>
 </head>
@@ -336,6 +356,7 @@
         <div class="title-group">
             <h1>记录查询</h1>
             <span class="title-sub">3341517985</span>
+            <div class="performance-note">💡 由于图片较多，请耐心等待加载，建议每张图片小于200KB</div>
         </div>
         <div class="auth-badge">
             <span id="authStatus">👤 访客模式 · 只读</span>
@@ -349,7 +370,7 @@
     <div id="settingsPanel" style="display: none;"></div>
     <div class="content-panel">
         <div class="list-header">
-            <span class="list-title" id="categoryTitle">水印会</span>
+            <span class="list-title" id="categoryTitle">会</span>
             <button id="addItemBtn" class="add-btn" style="display: none;">➕ 新增记录</button>
         </div>
         <div id="friendSubTabs" style="display: none;" class="sub-tabs"></div>
@@ -377,13 +398,19 @@
     let itemsData = { watermark_club: [], watermark_car: [], design_car: [], original_club: [], exchanged: [] };
     let friendGiftGroups = [];
     let settings = { hiddenCategories: [] };
+    // 修改分类显示名称（后端ID保持不变）
     const allCategories = [
-        { id: 'watermark_club', name: '水印会' },
-        { id: 'watermark_car', name: '水印车' },
+        { id: 'watermark_club', name: '会' },
+        { id: 'watermark_car', name: '车' },
         { id: 'design_car', name: '设车' },
         { id: 'original_club', name: '原创会' },
         { id: 'friend_gift', name: '友情赠' }
     ];
+    // 映射原始名称用于显示（可互换中需要显示原始分类名）
+    const categoryDisplayName = {
+        'watermark_club': '会',
+        'watermark_car': '车'
+    };
 
     async function fetchAPI(endpoint, options={}) {
         const res = await fetch(`${API_BASE}${endpoint}`, {
@@ -471,6 +498,9 @@
     }
 
     async function loadAllData() {
+        // 显示加载遮罩（可选）
+        const container = document.getElementById('itemsListContainer');
+        container.innerHTML = '<div class="empty-state">⏳ 加载中，请稍候（图片较多可能较慢）...</div>';
         try {
             const [club, car, design, original, exchanged] = await Promise.all([
                 fetchAPI('/items/watermark_club'),
@@ -483,7 +513,7 @@
             await loadFriendGiftGroups();
             renderCurrentView();
         } catch(err) {
-            document.getElementById('itemsListContainer').innerHTML = '<div class="empty-state">⚠️ 连接失败</div>';
+            container.innerHTML = '<div class="empty-state">⚠️ 连接失败，请刷新页面重试</div>';
         }
     }
 
@@ -496,17 +526,19 @@
         }
     }
 
-    // 修改后的 renderExchangeable：不显示赠送对象，备注跟在剩余份数后面
+    // 可互换列表：按原始物品名称排序
     function renderExchangeable() {
-        const groups = friendGiftGroups;
+        let groups = [...friendGiftGroups];
+        // 按原始物品名称排序
+        groups.sort((a, b) => a.originalName.localeCompare(b.originalName));
         const container = document.getElementById('itemsListContainer');
         if (!groups.length) {
-            container.innerHTML = '<div class="empty-state">暂无友情赠版本，请在水印会或水印车中录入友情赠。</div>';
+            container.innerHTML = '<div class="empty-state">暂无友情赠版本，请在会或车中录入友情赠。</div>';
             return;
         }
         let html = `<div class="items-grid">`;
         groups.forEach((group, idx) => {
-            const catName = group.originalCategory === 'watermark_club' ? '水印会' : '水印车';
+            const catName = categoryDisplayName[group.originalCategory] || (group.originalCategory === 'watermark_club' ? '会' : '车');
             html += `
                 <div class="item-card">
                     <div class="item-title">
@@ -523,7 +555,6 @@
                 } else if (ver.imageUrl && ver.imageUrl.trim() !== '') {
                     imgHtml = `<div><a href="${escapeHtml(ver.imageUrl)}" target="_blank">🖼️ 查看图片</a></div>`;
                 }
-                // 备注直接跟在剩余份数后面，用“ - ”连接
                 const remarkText = ver.adminRemark ? ` - 备注：${escapeHtml(ver.adminRemark)}` : '';
                 html += `
                     <div class="version-item-line ${exhaustedClass}">
@@ -794,6 +825,9 @@
         fileInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (file) {
+                if (file.size > 500 * 1024) {
+                    alert('图片较大（超过500KB），可能会导致加载缓慢，建议压缩后再上传。');
+                }
                 const base64 = await fileToBase64(file);
                 const hiddenImg = versionDiv.querySelector('.version-image-data');
                 if (hiddenImg) hiddenImg.value = base64;
