@@ -30,7 +30,7 @@ function loadData() {
     const data = JSON.parse(raw);
     if (!data._settings) data._settings = { hiddenCategories: [] };
     if (!data.exchanged) data.exchanged = [];
-    // 兼容水印会
+    // 水印会兼容
     for (let item of data.watermark_club) {
         if (item.remark === undefined) item.remark = '';
         if (item.isCompleted === undefined) item.isCompleted = false;
@@ -41,14 +41,13 @@ function loadData() {
             }
         }
     }
-    // 兼容水印车：移除 isCompleted 和 isImageStored，将 isShipped 映射为 isImageSent
+    // 水印车兼容（无完结和存图）
     for (let item of data.watermark_car) {
         if (item.remark === undefined) item.remark = '';
         if (item.isImageSent === undefined && item.isShipped !== undefined) {
             item.isImageSent = item.isShipped;
         }
         if (item.isImageSent === undefined) item.isImageSent = false;
-        // 删除废弃字段（避免残留）
         delete item.isCompleted;
         delete item.isImageStored;
         delete item.isShipped;
@@ -58,10 +57,11 @@ function loadData() {
             }
         }
     }
-    // 设车
+    // 设车：确保没有旧 subCategoryName 污染，但保留兼容
     for (let item of data.design_car) {
         if (item.remark === undefined) item.remark = '';
         if (item.carStatus === undefined) item.carStatus = 'on';
+        // 如果旧数据有 subCategoryName，可合并到 name 中（可选，这里忽略，前端只显示 name）
     }
     // 原创会
     for (let item of data.original_club) {
@@ -69,7 +69,11 @@ function loadData() {
         if (item.isCompleted === undefined) item.isCompleted = false;
         if (item.isImageStored === undefined) item.isImageStored = false;
     }
-    saveData(data); // 自动清理并保存
+    // 已换到：确保每个条目至少有一个 name 字段
+    for (let item of data.exchanged) {
+        if (item.name === undefined) item.name = '';
+    }
+    saveData(data);
     return data;
 }
 
@@ -113,12 +117,14 @@ app.post('/api/items/:category', checkAdmin, (req, res) => {
     const data = loadData();
     const category = req.params.category;
     if (category === 'exchanged') {
-        const newItem = { ...req.body, id: nextId(data.exchanged) };
+        const newItem = { name: req.body.name || '', id: nextId(data.exchanged) };
         data.exchanged.push(newItem);
         saveData(data);
         res.json(newItem);
     } else if (data[category]) {
         const newItem = { ...req.body, id: nextId(data[category]) };
+        // 如果是设车，确保没有 subCategoryName 字段（前端不再发送）
+        if (category === 'design_car') delete newItem.subCategoryName;
         data[category].push(newItem);
         saveData(data);
         res.json(newItem);
@@ -134,15 +140,17 @@ app.put('/api/items/:category/:id', checkAdmin, (req, res) => {
     if (category === 'exchanged') {
         const index = data.exchanged.findIndex(i => i.id === id);
         if (index === -1) return res.status(404).json({ error: '不存在' });
-        data.exchanged[index] = { ...req.body, id };
+        data.exchanged[index] = { name: req.body.name || '', id };
         saveData(data);
         res.json(data.exchanged[index]);
     } else if (data[category]) {
         const index = data[category].findIndex(i => i.id === id);
         if (index === -1) return res.status(404).json({ error: '不存在' });
-        data[category][index] = { ...req.body, id };
+        const updated = { ...req.body, id };
+        if (category === 'design_car') delete updated.subCategoryName;
+        data[category][index] = updated;
         saveData(data);
-        res.json(data[category][index]);
+        res.json(updated);
     } else {
         res.status(400).json({ error: '分类无效' });
     }
@@ -165,22 +173,17 @@ app.delete('/api/items/:category/:id', checkAdmin, (req, res) => {
     }
 });
 
-// 获取所有友情赠版本（分组返回，便于前端分组显示）
+// 获取所有友情赠版本（分组）
 app.get('/api/friendgift/items', (req, res) => {
     const data = loadData();
     const result = [];
-    // 水印会
     for (const item of data.watermark_club) {
         if (item.friendGift && item.friendGift.hasGift && item.friendGift.versions) {
             const group = {
                 originalId: item.id,
                 originalCategory: 'watermark_club',
                 originalName: item.name,
-                versions: []
-            };
-            for (let idx = 0; idx < item.friendGift.versions.length; idx++) {
-                const ver = item.friendGift.versions[idx];
-                group.versions.push({
+                versions: item.friendGift.versions.map((ver, idx) => ({
                     versionIdx: idx,
                     versionName: ver.version,
                     deadline: ver.deadline,
@@ -188,23 +191,18 @@ app.get('/api/friendgift/items', (req, res) => {
                     recipients: ver.recipients || [],
                     imageUrl: ver.imageUrl,
                     adminRemark: ver.adminRemark || ''
-                });
-            }
+                }))
+            };
             if (group.versions.length) result.push(group);
         }
     }
-    // 水印车
     for (const item of data.watermark_car) {
         if (item.friendGift && item.friendGift.hasGift && item.friendGift.versions) {
             const group = {
                 originalId: item.id,
                 originalCategory: 'watermark_car',
                 originalName: item.name,
-                versions: []
-            };
-            for (let idx = 0; idx < item.friendGift.versions.length; idx++) {
-                const ver = item.friendGift.versions[idx];
-                group.versions.push({
+                versions: item.friendGift.versions.map((ver, idx) => ({
                     versionIdx: idx,
                     versionName: ver.version,
                     deadline: ver.deadline,
@@ -212,15 +210,15 @@ app.get('/api/friendgift/items', (req, res) => {
                     recipients: ver.recipients || [],
                     imageUrl: ver.imageUrl,
                     adminRemark: ver.adminRemark || ''
-                });
-            }
+                }))
+            };
             if (group.versions.length) result.push(group);
         }
     }
     res.json(result);
 });
 
-// 更新某个友情赠版本的备注
+// 更新友情赠版本备注
 app.put('/api/friendgift/remark', checkAdmin, (req, res) => {
     const { originalCategory, originalId, versionIndex, remark } = req.body;
     const data = loadData();
