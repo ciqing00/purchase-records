@@ -8,7 +8,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-            background: #f0f4fa;  /* 浅雾蓝背景 */
+            background: #f0f4fa;
             color: #1f3a4c;
             padding: 2rem 1.5rem;
         }
@@ -293,6 +293,13 @@
             margin-bottom: 0.8rem;
             border: 1px solid #e2eaf5;
         }
+        .image-preview {
+            max-width: 100px;
+            max-height: 100px;
+            margin-top: 0.5rem;
+            border-radius: 12px;
+            border: 1px solid #dfeaf3;
+        }
         @media (max-width: 640px) { body { padding: 1rem; } }
     </style>
 </head>
@@ -481,11 +488,17 @@
             `;
             group.versions.forEach((ver, vIdx) => {
                 const remaining = (ver.copies || 0) - (ver.recipients ? ver.recipients.length : 0);
+                let imgHtml = '';
+                if (ver.imageUrl && ver.imageUrl.startsWith('data:image')) {
+                    imgHtml = `<div><img src="${ver.imageUrl}" class="image-preview" alt="预览" style="max-width:80px; max-height:80px;"></div>`;
+                } else if (ver.imageUrl && ver.imageUrl.trim() !== '') {
+                    imgHtml = `<div><a href="${escapeHtml(ver.imageUrl)}" target="_blank">🖼️ 查看图片</a></div>`;
+                }
                 html += `
                     <div class="version-item-line">
                         🎁 ${escapeHtml(ver.versionName)} - 截止 ${ver.deadline || '无'} - 剩余 ${remaining} 份 - 备注：${escapeHtml(ver.adminRemark || '无')}
                         ${isAdmin ? `<button class="edit-remark-btn" data-cat="${group.originalCategory}" data-id="${group.originalId}" data-veridx="${ver.versionIdx}" style="margin-left:0.5rem;">✏️ 编辑备注</button>` : ''}
-                        ${ver.imageUrl ? `<a href="${escapeHtml(ver.imageUrl)}" target="_blank" style="margin-left:0.5rem;">🖼️ 图片</a>` : ''}
+                        ${imgHtml}
                     </div>
                 `;
             });
@@ -669,7 +682,7 @@
                     <td>${escapeHtml(aa.time)}</td>
                     <td>${aa.isImgSent ? '✅' : '❌'}</td>
                     <td>${aa.isImgSaved ? '✅' : '❌'}</td>
-                </tr>`;
+                 </tr>`;
             });
             aaHtml = `<table class="aa-table">
                         <thead><tr><th>名称</th><th>金额</th><th>时间</th><th>发图</th><th>存图</th></tr></thead>
@@ -702,7 +715,13 @@
                 if (v.recipients && v.recipients.length) {
                     recipientsHtml = `<div style="margin-top:4px;"><strong>🎁 赠送对象：</strong> ${v.recipients.join(', ')}</div>`;
                 }
-                return `<div><strong>✨ ${v.version}</strong> 截止${v.deadline} 份数${v.copies} 剩余${v.copies - (v.recipients?.length||0)} ${recipientsHtml}</div>`;
+                let imgHtml = '';
+                if (v.imageUrl && v.imageUrl.startsWith('data:image')) {
+                    imgHtml = `<div><img src="${v.imageUrl}" class="image-preview" alt="预览" style="max-width:80px; max-height:80px;"></div>`;
+                } else if (v.imageUrl && v.imageUrl.trim() !== '') {
+                    imgHtml = `<div><a href="${escapeHtml(v.imageUrl)}" target="_blank">🖼️ 查看图片</a></div>`;
+                }
+                return `<div><strong>✨ ${v.version}</strong> 截止${v.deadline} 份数${v.copies} 剩余${v.copies - (v.recipients?.length||0)} ${recipientsHtml} ${imgHtml}</div>`;
             }).join('');
         }
         return `<div class="friend-gift">🎁友情赠:${versionsHtml}</div>`;
@@ -719,6 +738,50 @@
     async function openEditModal(id) {
         const item = itemsData[currentCategory].find(i => i.id == id);
         if(item) openFormModal(item);
+    }
+
+    // 图片转Base64
+    function fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    }
+
+    // 为每个版本添加图片上传预览逻辑
+    function attachImageUploadLogic(versionDiv, existingImageUrl = '') {
+        const fileInput = versionDiv.querySelector('.version-image-input');
+        const previewContainer = versionDiv.querySelector('.version-image-preview');
+        if (!fileInput) return;
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const base64 = await fileToBase64(file);
+                // 存储到隐藏域
+                const hiddenImg = versionDiv.querySelector('.version-image-data');
+                if (hiddenImg) hiddenImg.value = base64;
+                // 显示预览
+                if (previewContainer) {
+                    previewContainer.innerHTML = `<img src="${base64}" class="image-preview" alt="预览">`;
+                }
+            }
+        });
+        // 如果已有图片，显示预览
+        if (existingImageUrl && existingImageUrl.startsWith('data:image')) {
+            if (previewContainer) {
+                previewContainer.innerHTML = `<img src="${existingImageUrl}" class="image-preview" alt="预览">`;
+                const hiddenImg = versionDiv.querySelector('.version-image-data');
+                if (hiddenImg) hiddenImg.value = existingImageUrl;
+            }
+        } else if (existingImageUrl && existingImageUrl.trim() !== '') {
+            if (previewContainer) {
+                previewContainer.innerHTML = `<div><a href="${escapeHtml(existingImageUrl)}" target="_blank">当前图片链接</a></div>`;
+                const hiddenImg = versionDiv.querySelector('.version-image-data');
+                if (hiddenImg) hiddenImg.value = existingImageUrl;
+            }
+        }
     }
 
     function attachRecipientsLogic(modalDiv, existingVersions = null) {
@@ -743,6 +806,8 @@
             };
             copiesInput.addEventListener('input', refreshRecipients);
             refreshRecipients();
+            // 图片上传逻辑
+            attachImageUploadLogic(container, existingVersions?.[idx]?.imageUrl || '');
         });
     }
 
@@ -765,7 +830,6 @@
             sel.addEventListener('change', toggle); toggle();
         }
         if (['watermark_club','watermark_car'].includes(currentCategory)) {
-            // 友情赠有无选项切换逻辑
             const giftHasRadio = modalDiv.querySelector('input[name="giftHas"][value="有"]');
             const giftHasNotRadio = modalDiv.querySelector('input[name="giftHas"][value="无"]');
             const versionsContainer = modalDiv.querySelector('#versionsContainer');
@@ -796,7 +860,8 @@
                 addBtn.addEventListener('click', () => {
                     const container = modalDiv.querySelector('#versionsContainer');
                     const div = document.createElement('div'); div.className = 'version-item';
-                    div.innerHTML = `<div class="form-row"><input placeholder="版本名" class="version-name" value=""><input placeholder="截止日期" class="version-deadline" value=""><input placeholder="份数" class="version-copies" type="number" min="0" value="0"><input placeholder="图片URL" class="version-img" value=""></div>
+                    div.innerHTML = `<div class="form-row"><input placeholder="版本名" class="version-name" value=""><input placeholder="截止日期" class="version-deadline" value=""><input placeholder="份数" class="version-copies" type="number" min="0" value="0"></div>
+                                    <div><label>图片：</label><input type="file" accept="image/*" class="version-image-input"><div class="version-image-preview"></div><input type="hidden" class="version-image-data"></div>
                                     <div class="recipients-input version-recipients-area"></div><hr>`;
                     container.appendChild(div);
                     attachRecipientsLogic(modalDiv, existingVersions);
@@ -807,7 +872,8 @@
                 container.innerHTML = '';
                 existingVersions.forEach((ver, idx) => {
                     const div = document.createElement('div'); div.className = 'version-item';
-                    div.innerHTML = `<div class="form-row"><input placeholder="版本名" class="version-name" value="${escapeHtml(ver.version)}"><input placeholder="截止日期" class="version-deadline" value="${escapeHtml(ver.deadline)}"><input placeholder="份数" class="version-copies" type="number" min="0" value="${ver.copies}"><input placeholder="图片URL" class="version-img" value="${escapeHtml(ver.imageUrl)}"></div>
+                    div.innerHTML = `<div class="form-row"><input placeholder="版本名" class="version-name" value="${escapeHtml(ver.version)}"><input placeholder="截止日期" class="version-deadline" value="${escapeHtml(ver.deadline)}"><input placeholder="份数" class="version-copies" type="number" min="0" value="${ver.copies}"></div>
+                                    <div><label>图片：</label><input type="file" accept="image/*" class="version-image-input"><div class="version-image-preview"></div><input type="hidden" class="version-image-data" value="${escapeHtml(ver.imageUrl || '')}"></div>
                                     <div class="recipients-input version-recipients-area"></div><hr>`;
                     container.appendChild(div);
                 });
@@ -852,7 +918,7 @@
                     if (version) {
                         const deadline = div.querySelector('.version-deadline')?.value || '';
                         const copies = parseInt(div.querySelector('.version-copies')?.value) || 0;
-                        const imageUrl = div.querySelector('.version-img')?.value || '';
+                        const imageUrl = div.querySelector('.version-image-data')?.value || '';
                         const recipients = [];
                         const recipientInputs = div.querySelectorAll('.recipient-name');
                         recipientInputs.forEach(inp => { if(inp.value) recipients.push(inp.value); });
@@ -892,7 +958,7 @@
                     if (version) {
                         const deadline = div.querySelector('.version-deadline')?.value || '';
                         const copies = parseInt(div.querySelector('.version-copies')?.value) || 0;
-                        const imageUrl = div.querySelector('.version-img')?.value || '';
+                        const imageUrl = div.querySelector('.version-image-data')?.value || '';
                         const recipients = [];
                         const recipientInputs = div.querySelectorAll('.recipient-name');
                         recipientInputs.forEach(inp => { if(inp.value) recipients.push(inp.value); });
