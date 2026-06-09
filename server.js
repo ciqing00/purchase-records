@@ -11,6 +11,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.static('.'));
 
 // 持久化卷路径（Railway 挂载到 /data）
+const DATA_DIR = '/data';
 const DATA_FILE = '/data/data.json';
 
 // 初始数据结构
@@ -25,6 +26,9 @@ const defaultData = {
 
 function loadData() {
     if (!fs.existsSync(DATA_FILE)) {
+        if (!fs.existsSync(DATA_DIR)) {
+            fs.mkdirSync(DATA_DIR, { recursive: true });
+        }
         fs.writeFileSync(DATA_FILE, JSON.stringify(defaultData, null, 2));
         return defaultData;
     }
