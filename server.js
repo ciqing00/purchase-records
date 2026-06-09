@@ -38,10 +38,15 @@ function loadData() {
         if (item.friendGift?.versions) {
             for (let v of item.friendGift.versions) {
                 if (v.adminRemark === undefined) v.adminRemark = '';
+                if (v.recipients) {
+                    for (let r of v.recipients) {
+                        if (r.exchangedTo === undefined) r.exchangedTo = '';
+                    }
+                }
             }
         }
     }
-    // 水印车兼容（无完结和存图）
+    // 水印车兼容
     for (let item of data.watermark_car) {
         if (item.remark === undefined) item.remark = '';
         if (item.isImageSent === undefined && item.isShipped !== undefined) {
@@ -54,14 +59,20 @@ function loadData() {
         if (item.friendGift?.versions) {
             for (let v of item.friendGift.versions) {
                 if (v.adminRemark === undefined) v.adminRemark = '';
+                if (v.recipients) {
+                    for (let r of v.recipients) {
+                        if (r.exchangedTo === undefined) r.exchangedTo = '';
+                    }
+                }
             }
         }
     }
-    // 设车：确保没有旧 subCategoryName 污染，但保留兼容
+    // 设车：增加新字段
     for (let item of data.design_car) {
         if (item.remark === undefined) item.remark = '';
         if (item.carStatus === undefined) item.carStatus = 'on';
-        // 如果旧数据有 subCategoryName，可合并到 name 中（可选，这里忽略，前端只显示 name）
+        if (item.memberCount === undefined) item.memberCount = '';
+        if (item.carNumber === undefined) item.carNumber = '';
     }
     // 原创会
     for (let item of data.original_club) {
@@ -69,7 +80,7 @@ function loadData() {
         if (item.isCompleted === undefined) item.isCompleted = false;
         if (item.isImageStored === undefined) item.isImageStored = false;
     }
-    // 已换到：确保每个条目至少有一个 name 字段
+    // 已换到
     for (let item of data.exchanged) {
         if (item.name === undefined) item.name = '';
     }
@@ -89,6 +100,43 @@ function checkAdmin(req, res, next) {
     const pwd = req.headers['x-admin-password'];
     if (pwd === '001128') return next();
     res.status(401).json({ error: '密码错误' });
+}
+
+// 自动同步已换到：从友情赠版本中提取所有非空的 exchangedTo，去重后添加到 exchanged 列表
+function syncExchangedFromGifts(data) {
+    const exchangedNamesSet = new Set(data.exchanged.map(e => e.name));
+    const newExchanged = [];
+    // 遍历水印会和水印车的友情赠版本
+    for (const item of data.watermark_club) {
+        if (item.friendGift && item.friendGift.hasGift && item.friendGift.versions) {
+            for (const ver of item.friendGift.versions) {
+                if (ver.recipients) {
+                    for (const r of ver.recipients) {
+                        if (r.exchangedTo && r.exchangedTo.trim() !== '' && !exchangedNamesSet.has(r.exchangedTo.trim())) {
+                            exchangedNamesSet.add(r.exchangedTo.trim());
+                            newExchanged.push({ name: r.exchangedTo.trim(), id: nextId(data.exchanged) });
+                        }
+                    }
+                }
+            }
+        }
+    }
+    for (const item of data.watermark_car) {
+        if (item.friendGift && item.friendGift.hasGift && item.friendGift.versions) {
+            for (const ver of item.friendGift.versions) {
+                if (ver.recipients) {
+                    for (const r of ver.recipients) {
+                        if (r.exchangedTo && r.exchangedTo.trim() !== '' && !exchangedNamesSet.has(r.exchangedTo.trim())) {
+                            exchangedNamesSet.add(r.exchangedTo.trim());
+                            newExchanged.push({ name: r.exchangedTo.trim(), id: nextId(data.exchanged) });
+                        }
+                    }
+                }
+            }
+        }
+    }
+    data.exchanged.push(...newExchanged);
+    return data;
 }
 
 app.get('/api/items/:category', (req, res) => {
@@ -114,7 +162,7 @@ app.put('/api/settings', checkAdmin, (req, res) => {
 });
 
 app.post('/api/items/:category', checkAdmin, (req, res) => {
-    const data = loadData();
+    let data = loadData();
     const category = req.params.category;
     if (category === 'exchanged') {
         const newItem = { name: req.body.name || '', id: nextId(data.exchanged) };
@@ -123,9 +171,14 @@ app.post('/api/items/:category', checkAdmin, (req, res) => {
         res.json(newItem);
     } else if (data[category]) {
         const newItem = { ...req.body, id: nextId(data[category]) };
-        // 如果是设车，确保没有 subCategoryName 字段（前端不再发送）
-        if (category === 'design_car') delete newItem.subCategoryName;
+        if (category === 'design_car') {
+            delete newItem.subCategoryName;
+        }
         data[category].push(newItem);
+        // 如果是水印会或水印车且包含友情赠，需要同步已换到
+        if (category === 'watermark_club' || category === 'watermark_car') {
+            data = syncExchangedFromGifts(data);
+        }
         saveData(data);
         res.json(newItem);
     } else {
@@ -134,7 +187,7 @@ app.post('/api/items/:category', checkAdmin, (req, res) => {
 });
 
 app.put('/api/items/:category/:id', checkAdmin, (req, res) => {
-    const data = loadData();
+    let data = loadData();
     const category = req.params.category;
     const id = parseInt(req.params.id);
     if (category === 'exchanged') {
@@ -147,8 +200,14 @@ app.put('/api/items/:category/:id', checkAdmin, (req, res) => {
         const index = data[category].findIndex(i => i.id === id);
         if (index === -1) return res.status(404).json({ error: '不存在' });
         const updated = { ...req.body, id };
-        if (category === 'design_car') delete updated.subCategoryName;
+        if (category === 'design_car') {
+            delete updated.subCategoryName;
+        }
         data[category][index] = updated;
+        // 如果是水印会或水印车且包含友情赠，需要同步已换到
+        if (category === 'watermark_club' || category === 'watermark_car') {
+            data = syncExchangedFromGifts(data);
+        }
         saveData(data);
         res.json(updated);
     } else {
