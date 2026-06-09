@@ -176,7 +176,7 @@
             padding: 0.2rem 0.8rem;
             border-radius: 30px;
         }
-        .edit-btn, .delete-btn {
+        .edit-btn, .delete-btn, .edit-remark-btn {
             background: none;
             border: none;
             padding: 0.3rem 0.9rem;
@@ -185,6 +185,7 @@
         }
         .edit-btn { background: #eef2ff; color: #2563eb; }
         .delete-btn { background: #fee2e2; color: #dc2626; }
+        .edit-remark-btn { background: #eef2ff; color: #2c7a4d; }
         .detail-badge {
             background: #f8fafc;
             border-radius: 30px;
@@ -245,6 +246,8 @@
         .secondary { background: #e2e8f0; border: none; padding: 0.5rem 1rem; border-radius: 30px; cursor: pointer; }
         .empty-state { text-align: center; padding: 3rem; color: #94a3b8; }
         .recipients-input { margin-left: 1rem; margin-top: 0.5rem; padding-left: 0.5rem; border-left: 2px solid #ddd; }
+        .version-list { margin-top: 0.5rem; padding-left: 1rem; border-left: 2px solid #e2e8f0; }
+        .version-item-line { margin-bottom: 0.3rem; font-size: 0.85rem; }
         @media (max-width: 640px) { body { padding: 1rem; } }
     </style>
 </head>
@@ -270,7 +273,6 @@
             <span class="list-title" id="categoryTitle">水印会</span>
             <button id="addItemBtn" class="add-btn" style="display: none;">➕ 新增记录</button>
         </div>
-        <!-- 友情赠的子标签 -->
         <div id="friendSubTabs" style="display: none;" class="sub-tabs"></div>
         <div id="itemsListContainer"><div class="empty-state">加载中...</div></div>
     </div>
@@ -279,10 +281,10 @@
 <script>
     const API_BASE = '/api';
     let currentCategory = 'watermark_club';
-    let currentSub = 'exchangeable';  // 'exchangeable' 或 'exchanged'
+    let currentSub = 'exchangeable';
     let isAdmin = false;
     let itemsData = { watermark_club: [], watermark_car: [], design_car: [], original_club: [], exchanged: [] };
-    let friendGiftItems = [];   // 存储从API获取的友情赠版本列表
+    let friendGiftGroups = [];   // 分组数据
     let settings = { hiddenCategories: [] };
     const allCategories = [
         { id: 'watermark_club', name: '水印会' },
@@ -328,7 +330,7 @@
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 currentCategory = btn.dataset.cat;
-                currentSub = 'exchangeable'; // 重置子标签
+                currentSub = 'exchangeable';
                 document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
                 btn.classList.add('active');
                 document.getElementById('categoryTitle').innerText = allCategories.find(c=>c.id===currentCategory)?.name || '';
@@ -366,10 +368,10 @@
         });
     }
 
-    async function loadFriendGiftVersions() {
+    async function loadFriendGiftGroups() {
         try {
-            friendGiftItems = await fetchAPI('/friendgift/items');
-        } catch(e) { console.warn(e); friendGiftItems = []; }
+            friendGiftGroups = await fetchAPI('/friendgift/items');
+        } catch(e) { console.warn(e); friendGiftGroups = []; }
     }
 
     async function loadAllData() {
@@ -382,7 +384,7 @@
                 fetchAPI('/items/exchanged')
             ]);
             itemsData = { watermark_club: club, watermark_car: car, design_car: design, original_club: original, exchanged };
-            await loadFriendGiftVersions();
+            await loadFriendGiftGroups();
             renderCurrentView();
         } catch(err) {
             document.getElementById('itemsListContainer').innerHTML = '<div class="empty-state">⚠️ 连接失败</div>';
@@ -399,42 +401,45 @@
     }
 
     function renderExchangeable() {
-        const list = friendGiftItems;
+        const groups = friendGiftGroups;
         const container = document.getElementById('itemsListContainer');
-        if (!list.length) {
+        if (!groups.length) {
             container.innerHTML = '<div class="empty-state">暂无友情赠版本，请在水印会或水印车中录入友情赠。</div>';
             return;
         }
-        const sorted = [...list]; // 按原始名称排序
         let html = `<div class="items-grid">`;
-        list.forEach((item, idx) => {
-            const remaining = (item.copies || 0) - (item.recipients ? item.recipients.length : 0);
-            const catName = item.originalCategory === 'watermark_club' ? '水印会' : '水印车';
+        groups.forEach((group, idx) => {
+            const catName = group.originalCategory === 'watermark_club' ? '水印会' : '水印车';
             html += `
                 <div class="item-card">
                     <div class="item-title">
-                        <span class="item-name">${idx+1}. ${escapeHtml(item.originalName)} (${catName})</span>
-                        ${isAdmin ? `<div><button class="edit-remark-btn" data-id="${item.id}" data-cat="${item.originalCategory}" data-origid="${item.originalId}" data-veridx="${item.versionIdx}">✏️ 编辑备注</button></div>` : ''}
+                        <span class="item-name">${idx+1}. ${escapeHtml(group.originalName)} (${catName})</span>
                     </div>
-                    <div class="detail-badge">🎁 版本：${escapeHtml(item.versionName)}</div>
-                    <div class="detail-badge">📅 截止：${item.deadline || '无'}</div>
-                    <div class="detail-badge">📦 剩余份数：${remaining}</div>
-                    ${item.imageUrl ? `<div class="detail-badge"><a href="${escapeHtml(item.imageUrl)}" target="_blank">🖼️ 查看图片</a></div>` : ''}
-                    <div class="remark-text">📝 备注：${escapeHtml(item.adminRemark || '无')}</div>
-                </div>
+                    <div class="version-list">
             `;
+            group.versions.forEach((ver, vIdx) => {
+                const remaining = (ver.copies || 0) - (ver.recipients ? ver.recipients.length : 0);
+                html += `
+                    <div class="version-item-line">
+                        🎁 ${escapeHtml(ver.versionName)} - 截止 ${ver.deadline || '无'} - 剩余 ${remaining} 份 - 备注：${escapeHtml(ver.adminRemark || '无')}
+                        ${isAdmin ? `<button class="edit-remark-btn" data-cat="${group.originalCategory}" data-id="${group.originalId}" data-veridx="${ver.versionIdx}" style="margin-left:0.5rem;">✏️ 编辑备注</button>` : ''}
+                        ${ver.imageUrl ? `<a href="${escapeHtml(ver.imageUrl)}" target="_blank" style="margin-left:0.5rem;">🖼️ 图片</a>` : ''}
+                    </div>
+                `;
+            });
+            html += `</div></div>`;
         });
         html += `</div>`;
         container.innerHTML = html;
         if (isAdmin) {
             document.querySelectorAll('.edit-remark-btn').forEach(btn => {
                 btn.addEventListener('click', async (e) => {
-                    const id = btn.dataset.id; // 例如 club_123_0
-                    const parts = id.split('_');
-                    const originalCategory = parts[0] === 'club' ? 'watermark_club' : 'watermark_car';
-                    const originalId = parseInt(parts[1]);
-                    const versionIndex = parseInt(parts[2]);
-                    const newRemark = prompt('请输入新的备注', friendGiftItems.find(i => i.id === id)?.adminRemark || '');
+                    const originalCategory = btn.dataset.cat;
+                    const originalId = parseInt(btn.dataset.id);
+                    const versionIndex = parseInt(btn.dataset.veridx);
+                    const group = friendGiftGroups.find(g => g.originalId === originalId && g.originalCategory === originalCategory);
+                    const version = group?.versions.find(v => v.versionIdx === versionIndex);
+                    const newRemark = prompt('请输入新的备注', version?.adminRemark || '');
                     if (newRemark !== null) {
                         try {
                             await fetchAPI('/friendgift/remark', {
@@ -442,7 +447,7 @@
                                 body: JSON.stringify({ originalCategory, originalId, versionIndex, remark: newRemark }),
                                 headers: { 'X-Admin-Password': '001128' }
                             });
-                            await loadFriendGiftVersions();
+                            await loadFriendGiftGroups();
                             renderCurrentView();
                         } catch(e) { alert('更新失败'); }
                     }
@@ -548,7 +553,7 @@
             if (!item.isImageStored) return true;
             return false;
         } else if (cat === 'watermark_car') {
-            if (!item.isPaid || !item.isFormFilled || !item.isShipped || !item.isImageStored) return true;
+            if (!item.isPaid || !item.isFormFilled || !item.isImageSent) return true;
             return false;
         } else if (cat === 'design_car') {
             if (!item.aaImgSent || !item.aaImgSaved) return true;
@@ -563,7 +568,13 @@
     function renderCommonCard(item) {
         const warning = isWarningItem(item, currentCategory);
         let statusHtml = '';
-        if (currentCategory === 'watermark_club' || currentCategory === 'original_club') {
+        if (currentCategory === 'watermark_club') {
+            statusHtml = `<span class="detail-badge">${item.isCompleted ? '✅ 完结' : '🔄 未完结'}</span>
+                          <span class="detail-badge">${item.isImageStored ? '📸 已存图' : '⚠️ 未存图'}</span>`;
+        } else if (currentCategory === 'watermark_car') {
+            // 水印车不显示完结和存图
+            statusHtml = '';
+        } else if (currentCategory === 'original_club') {
             statusHtml = `<span class="detail-badge">${item.isCompleted ? '✅ 完结' : '🔄 未完结'}</span>
                           <span class="detail-badge">${item.isImageStored ? '📸 已存图' : '⚠️ 未存图'}</span>`;
         }
@@ -578,7 +589,7 @@
         } else if (currentCategory === 'watermark_car') {
             extra = `<div class="detail-badge">💰 ${item.price||'-'}</div>
                      <div class="detail-badge">🎨 ${item.style||'-'}</div>
-                     <div class="detail-badge">付钱:${item.isPaid?'✅':'❌'} 填表:${item.isFormFilled?'✅':'❌'} 发货:${item.isShipped?'✅':'❌'}</div>
+                     <div class="detail-badge">付钱:${item.isPaid?'✅':'❌'} 填表:${item.isFormFilled?'✅':'❌'} 发图:${item.isImageSent?'✅':'❌'}</div>
                      ${renderFriendGiftDisplay(item.friendGift)}`;
         } else if (currentCategory === 'original_club') {
             extra = `<div class="detail-badge">💰 ${item.amount||'-'}</div>
@@ -692,7 +703,6 @@
             if (addBtn) {
                 addBtn.addEventListener('click', () => {
                     const container = modalDiv.querySelector('#versionsContainer');
-                    const idx = container.children.length;
                     const div = document.createElement('div'); div.className = 'version-item';
                     div.innerHTML = `<div class="form-row"><input placeholder="版本名" class="version-name"><input placeholder="截止日期" class="version-deadline"><input placeholder="份数" class="version-copies" type="number" min="0" value="0"><input placeholder="图片URL" class="version-img"></div>
                                     <div class="recipients-input version-recipients-area"></div><hr>`;
@@ -795,9 +805,7 @@
                 style: modalDiv.querySelector('#style').value,
                 isPaid: modalDiv.querySelector('#isPaid').checked,
                 isFormFilled: modalDiv.querySelector('#isFormFilled').checked,
-                isShipped: modalDiv.querySelector('#isShipped').checked,
-                isCompleted: modalDiv.querySelector('#isCompleted').checked,
-                isImageStored: modalDiv.querySelector('#isImageStored').checked,
+                isImageSent: modalDiv.querySelector('#isImageSent').checked,
                 remark: modalDiv.querySelector('#remark')?.value || '',
                 friendGift
             };
@@ -854,7 +862,7 @@
     function generateWatermarkCarForm(edit) {
         return `<div><label>名称</label><input id="name" value="${edit?.name||''}"></div>
         <div class="form-row"><div><label>价格</label><input id="price" value="${edit?.price||''}"></div><div><label>风格</label><input id="style" value="${edit?.style||''}"></div></div>
-        <div class="checkbox-group"><label><input type="checkbox" id="isPaid" ${edit?.isPaid?'checked':''}> 付钱</label><label><input type="checkbox" id="isFormFilled" ${edit?.isFormFilled?'checked':''}> 填表</label><label><input type="checkbox" id="isShipped" ${edit?.isShipped?'checked':''}> 发货</label><label><input type="checkbox" id="isCompleted" ${edit?.isCompleted?'checked':''}> 完结</label><label><input type="checkbox" id="isImageStored" ${edit?.isImageStored?'checked':''}> 存图</label></div>
+        <div class="checkbox-group"><label><input type="checkbox" id="isPaid" ${edit?.isPaid?'checked':''}> 付钱</label><label><input type="checkbox" id="isFormFilled" ${edit?.isFormFilled?'checked':''}> 填表</label><label><input type="checkbox" id="isImageSent" ${edit?.isImageSent?'checked':''}> 发图</label></div>
         <div><label>备注</label><textarea id="remark" rows="2">${edit?.remark||''}</textarea></div>
         <hr><label><input type="checkbox" id="hasGift" ${edit?.friendGift?.hasGift?'checked':''}> 友情赠</label><div id="versionsContainer"></div><button id="addVersionBtn">+ 增加版本</button>`;
     }
