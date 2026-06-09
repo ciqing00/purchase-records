@@ -299,6 +299,15 @@
             margin-top: 0.5rem;
             border-radius: 12px;
             border: 1px solid #dfeaf3;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .image-preview:hover {
+            opacity: 0.8;
+        }
+        .zero-remaining {
+            color: #aaa;
+            text-decoration: line-through;
         }
         @media (max-width: 640px) { body { padding: 1rem; } }
     </style>
@@ -488,15 +497,21 @@
             `;
             group.versions.forEach((ver, vIdx) => {
                 const remaining = (ver.copies || 0) - (ver.recipients ? ver.recipients.length : 0);
+                let remainingHtml = '';
+                if (remaining === 0) {
+                    remainingHtml = `<span class="zero-remaining">剩余 0 份</span>`;
+                } else {
+                    remainingHtml = `剩余 ${remaining} 份`;
+                }
                 let imgHtml = '';
                 if (ver.imageUrl && ver.imageUrl.startsWith('data:image')) {
-                    imgHtml = `<div><img src="${ver.imageUrl}" class="image-preview" alt="预览" style="max-width:80px; max-height:80px;"></div>`;
+                    imgHtml = `<div><img src="${ver.imageUrl}" class="image-preview" alt="预览" data-fullsrc="${ver.imageUrl}" style="cursor:pointer;" onclick="window.open(this.dataset.fullsrc, '_blank')"></div>`;
                 } else if (ver.imageUrl && ver.imageUrl.trim() !== '') {
                     imgHtml = `<div><a href="${escapeHtml(ver.imageUrl)}" target="_blank">🖼️ 查看图片</a></div>`;
                 }
                 html += `
                     <div class="version-item-line">
-                        🎁 ${escapeHtml(ver.versionName)} - 截止 ${ver.deadline || '无'} - 剩余 ${remaining} 份 - 备注：${escapeHtml(ver.adminRemark || '无')}
+                        🎁 ${escapeHtml(ver.versionName)} - 截止 ${ver.deadline || '无'} - ${remainingHtml} - 备注：${escapeHtml(ver.adminRemark || '无')}
                         ${isAdmin ? `<button class="edit-remark-btn" data-cat="${group.originalCategory}" data-id="${group.originalId}" data-veridx="${ver.versionIdx}" style="margin-left:0.5rem;">✏️ 编辑备注</button>` : ''}
                         ${imgHtml}
                     </div>
@@ -717,7 +732,7 @@
                 }
                 let imgHtml = '';
                 if (v.imageUrl && v.imageUrl.startsWith('data:image')) {
-                    imgHtml = `<div><img src="${v.imageUrl}" class="image-preview" alt="预览" style="max-width:80px; max-height:80px;"></div>`;
+                    imgHtml = `<div><img src="${v.imageUrl}" class="image-preview" alt="预览" data-fullsrc="${v.imageUrl}" style="cursor:pointer;" onclick="window.open(this.dataset.fullsrc, '_blank')"></div>`;
                 } else if (v.imageUrl && v.imageUrl.trim() !== '') {
                     imgHtml = `<div><a href="${escapeHtml(v.imageUrl)}" target="_blank">🖼️ 查看图片</a></div>`;
                 }
@@ -740,7 +755,6 @@
         if(item) openFormModal(item);
     }
 
-    // 图片转Base64
     function fileToBase64(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -750,7 +764,6 @@
         });
     }
 
-    // 为每个版本添加图片上传预览逻辑
     function attachImageUploadLogic(versionDiv, existingImageUrl = '') {
         const fileInput = versionDiv.querySelector('.version-image-input');
         const previewContainer = versionDiv.querySelector('.version-image-preview');
@@ -759,19 +772,16 @@
             const file = e.target.files[0];
             if (file) {
                 const base64 = await fileToBase64(file);
-                // 存储到隐藏域
                 const hiddenImg = versionDiv.querySelector('.version-image-data');
                 if (hiddenImg) hiddenImg.value = base64;
-                // 显示预览
                 if (previewContainer) {
-                    previewContainer.innerHTML = `<img src="${base64}" class="image-preview" alt="预览">`;
+                    previewContainer.innerHTML = `<img src="${base64}" class="image-preview" alt="预览" data-fullsrc="${base64}" style="cursor:pointer;" onclick="window.open(this.dataset.fullsrc, '_blank')">`;
                 }
             }
         });
-        // 如果已有图片，显示预览
         if (existingImageUrl && existingImageUrl.startsWith('data:image')) {
             if (previewContainer) {
-                previewContainer.innerHTML = `<img src="${existingImageUrl}" class="image-preview" alt="预览">`;
+                previewContainer.innerHTML = `<img src="${existingImageUrl}" class="image-preview" alt="预览" data-fullsrc="${existingImageUrl}" style="cursor:pointer;" onclick="window.open(this.dataset.fullsrc, '_blank')">`;
                 const hiddenImg = versionDiv.querySelector('.version-image-data');
                 if (hiddenImg) hiddenImg.value = existingImageUrl;
             }
@@ -806,7 +816,6 @@
             };
             copiesInput.addEventListener('input', refreshRecipients);
             refreshRecipients();
-            // 图片上传逻辑
             attachImageUploadLogic(container, existingVersions?.[idx]?.imageUrl || '');
         });
     }
