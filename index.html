@@ -496,6 +496,7 @@
         }
     }
 
+    // 修改后的 renderExchangeable：不显示赠送对象，备注跟在剩余份数后面
     function renderExchangeable() {
         const groups = friendGiftGroups;
         const container = document.getElementById('itemsListContainer');
@@ -522,22 +523,13 @@
                 } else if (ver.imageUrl && ver.imageUrl.trim() !== '') {
                     imgHtml = `<div><a href="${escapeHtml(ver.imageUrl)}" target="_blank">🖼️ 查看图片</a></div>`;
                 }
-                let recipientsHtml = '';
-                if (ver.recipients && ver.recipients.length) {
-                    recipientsHtml = `<div style="margin-top:4px;"><strong>🎁 赠送对象：</strong><br>`;
-                    ver.recipients.forEach(r => {
-                        const exchangedDisplay = r.exchangedTo ? ` → 已换到：${escapeHtml(r.exchangedTo)}` : '';
-                        recipientsHtml += `<div>▪️ ${escapeHtml(r.name)}${exchangedDisplay}</div>`;
-                    });
-                    recipientsHtml += `</div>`;
-                }
+                // 备注直接跟在剩余份数后面，用“ - ”连接
+                const remarkText = ver.adminRemark ? ` - 备注：${escapeHtml(ver.adminRemark)}` : '';
                 html += `
                     <div class="version-item-line ${exhaustedClass}">
-                        🎁 ${escapeHtml(ver.versionName)} - 截止 ${ver.deadline || '无'} - 剩余 ${remaining} 份
+                        🎁 ${escapeHtml(ver.versionName)} - 截止 ${ver.deadline || '无'} - 剩余 ${remaining} 份${remarkText}
                         ${isAdmin ? `<button class="edit-remark-btn" data-cat="${group.originalCategory}" data-id="${group.originalId}" data-veridx="${ver.versionIdx}" style="margin-left:0.5rem;">✏️ 编辑备注</button>` : ''}
                         ${imgHtml}
-                        ${recipientsHtml}
-                        <div class="remark-text" style="margin-top:0.3rem;">📝 备注：${escapeHtml(ver.adminRemark || '无')}</div>
                     </div>
                 `;
             });
