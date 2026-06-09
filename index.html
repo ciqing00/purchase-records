@@ -8,8 +8,8 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-            background: #f4f7fc;
-            color: #1a2c3e;
+            background: #eef2fa;  /* 雾蓝背景 */
+            color: #1f3a4c;
             padding: 2rem 1.5rem;
         }
         .container { max-width: 1400px; margin: 0 auto; }
@@ -21,7 +21,7 @@
             gap: 1rem;
             margin-bottom: 2rem;
             padding-bottom: 1rem;
-            border-bottom: 2px solid rgba(100, 116, 139, 0.2);
+            border-bottom: 2px solid rgba(79, 125, 158, 0.2);
         }
         .title-group {
             display: flex;
@@ -32,33 +32,38 @@
         h1 {
             font-size: 2rem;
             font-weight: 600;
-            background: linear-gradient(135deg, #1e4b6e, #2c7a4d);
+            background: linear-gradient(135deg, #2c5a7a, #4f7d9e);
             background-clip: text;
             -webkit-background-clip: text;
             color: transparent;
         }
         .title-sub {
             font-size: 0.85rem;
-            color: #cbd5e1;
+            color: #9bb7d0;
             font-weight: normal;
             letter-spacing: 1px;
         }
         .auth-badge {
-            background: #ffffffcc;
+            background: rgba(255,255,255,0.7);
             backdrop-filter: blur(4px);
             border-radius: 60px;
             padding: 0.4rem 1rem;
             display: flex;
             align-items: center;
             gap: 0.8rem;
+            font-size: 0.85rem;
         }
         .admin-btn {
-            background: #1f4e6c;
+            background: #4f7d9e;
             color: white;
             border: none;
             padding: 0.4rem 1rem;
             border-radius: 40px;
             cursor: pointer;
+            transition: 0.2s;
+        }
+        .admin-btn:hover {
+            background: #2c5a7a;
         }
         .category-bar {
             display: flex;
@@ -74,17 +79,19 @@
             gap: 0.6rem;
         }
         .tab-btn {
-            background: #eef2f6;
+            background: #e2eaf5;
             border: none;
             padding: 0.5rem 1.3rem;
             border-radius: 40px;
             cursor: pointer;
             font-weight: 500;
+            color: #2c5a7a;
+            transition: 0.2s;
         }
         .tab-btn.active {
             background: white;
-            color: #1f4e6c;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05), 0 0 0 1px #cbd5e1;
+            color: #1f4b6e;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05), 0 0 0 1px #bfd6e8;
         }
         .sub-tabs {
             display: flex;
@@ -92,25 +99,27 @@
             margin-bottom: 1rem;
         }
         .sub-tab-btn {
-            background: #eef2f6;
+            background: #e2eaf5;
             border: none;
             padding: 0.3rem 1rem;
             border-radius: 30px;
             cursor: pointer;
             font-size: 0.85rem;
+            color: #2c5a7a;
         }
         .sub-tab-btn.active {
             background: white;
-            border: 1px solid #cbd5e1;
+            border: 1px solid #bfd6e8;
         }
         .settings-icon {
-            background: #eef2f6;
+            background: #e2eaf5;
             border: none;
             width: 2.4rem;
             height: 2.4rem;
             border-radius: 60px;
             font-size: 1.2rem;
             cursor: pointer;
+            color: #2c5a7a;
         }
         .content-panel {
             background: white;
@@ -127,15 +136,19 @@
         .list-title {
             font-size: 1.5rem;
             font-weight: 600;
-            color: #1f4e6c;
+            color: #2c5a7a;
         }
         .add-btn {
-            background: #2c7a4d;
+            background: #4f7d9e;
             color: white;
             border: none;
             padding: 0.5rem 1.2rem;
             border-radius: 40px;
             cursor: pointer;
+            transition: 0.2s;
+        }
+        .add-btn:hover {
+            background: #2c5a7a;
         }
         .items-grid {
             display: flex;
@@ -145,17 +158,17 @@
         .item-card {
             background: #ffffff;
             border-radius: 24px;
-            border: 1px solid #e9edf2;
+            border: 1px solid #dfeaf3;
             padding: 1.2rem;
             transition: 0.2s;
         }
         .item-card.warning {
-            border: 2px solid #f97316;
-            background: #fff7ed;
+            border: 2px solid #f9b43a;
+            background: #fffaf0;
         }
         .warning-badge {
             display: inline-block;
-            background: #f97316;
+            background: #f9b43a;
             color: white;
             border-radius: 30px;
             padding: 0.2rem 0.7rem;
@@ -172,9 +185,10 @@
         .item-name {
             font-weight: 700;
             font-size: 1.1rem;
-            background: #f1f5f9;
+            background: #eef2fa;
             padding: 0.2rem 0.8rem;
             border-radius: 30px;
+            color: #1f3a4c;
         }
         .edit-btn, .delete-btn, .edit-remark-btn {
             background: none;
@@ -182,39 +196,42 @@
             padding: 0.3rem 0.9rem;
             border-radius: 30px;
             cursor: pointer;
+            font-size: 0.8rem;
         }
-        .edit-btn { background: #eef2ff; color: #2563eb; }
-        .delete-btn { background: #fee2e2; color: #dc2626; }
-        .edit-remark-btn { background: #eef2ff; color: #2c7a4d; }
+        .edit-btn { background: #e2eaf5; color: #2c5a7a; }
+        .delete-btn { background: #fee2e2; color: #c45a5a; }
+        .edit-remark-btn { background: #e2eaf5; color: #4f7d9e; }
         .detail-badge {
-            background: #f8fafc;
+            background: #eef2fa;
             border-radius: 30px;
             padding: 0.2rem 0.7rem;
             font-size: 0.75rem;
             display: inline-flex;
             align-items: center;
             gap: 0.3rem;
+            color: #2c5a7a;
         }
         .friend-gift {
-            background: #fef6e0;
+            background: #f3f6fb;
             border-radius: 16px;
             padding: 0.5rem;
             margin-top: 0.5rem;
             font-size: 0.75rem;
         }
         .remark-text {
-            background: #f1f5f9;
+            background: #f3f6fb;
             border-radius: 12px;
             padding: 0.4rem 0.6rem;
             margin-top: 0.6rem;
             font-size: 0.8rem;
-            border-left: 3px solid #2c7a4d;
+            border-left: 3px solid #4f7d9e;
+            color: #2c5a7a;
         }
         .modal {
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            background: rgba(0,0,0,0.4);
+            background: rgba(0,0,0,0.3);
             backdrop-filter: blur(6px);
             display: flex;
             align-items: center;
@@ -231,22 +248,23 @@
             padding: 1.8rem;
         }
         .form-group { margin-bottom: 1rem; }
-        label { font-weight: 500; display: block; margin-bottom: 0.3rem; font-size: 0.85rem; }
+        label { font-weight: 500; display: block; margin-bottom: 0.3rem; font-size: 0.85rem; color: #1f3a4c; }
         input, select, textarea {
             width: 100%;
             padding: 0.6rem 0.8rem;
             border-radius: 16px;
-            border: 1px solid #cbd5e1;
+            border: 1px solid #cbddee;
             font-size: 0.9rem;
+            background: #fefefe;
         }
         textarea { resize: vertical; }
         .form-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.8rem; }
         .checkbox-group { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; }
         .modal-buttons { display: flex; justify-content: flex-end; gap: 0.8rem; margin-top: 1.8rem; }
-        .secondary { background: #e2e8f0; border: none; padding: 0.5rem 1rem; border-radius: 30px; cursor: pointer; }
-        .empty-state { text-align: center; padding: 3rem; color: #94a3b8; }
-        .recipients-input { margin-left: 1rem; margin-top: 0.5rem; padding-left: 0.5rem; border-left: 2px solid #ddd; }
-        .version-list { margin-top: 0.5rem; padding-left: 1rem; border-left: 2px solid #e2e8f0; }
+        .secondary { background: #e2eaf5; border: none; padding: 0.5rem 1rem; border-radius: 30px; cursor: pointer; color: #2c5a7a; }
+        .empty-state { text-align: center; padding: 3rem; color: #9bb7d0; }
+        .recipients-input { margin-left: 1rem; margin-top: 0.5rem; padding-left: 0.5rem; border-left: 2px solid #cbddee; }
+        .version-list { margin-top: 0.5rem; padding-left: 1rem; border-left: 2px solid #dfeaf3; }
         .version-item-line { margin-bottom: 0.3rem; font-size: 0.85rem; }
         @media (max-width: 640px) { body { padding: 1rem; } }
     </style>
@@ -284,7 +302,7 @@
     let currentSub = 'exchangeable';
     let isAdmin = false;
     let itemsData = { watermark_club: [], watermark_car: [], design_car: [], original_club: [], exchanged: [] };
-    let friendGiftGroups = [];   // 分组数据
+    let friendGiftGroups = [];
     let settings = { hiddenCategories: [] };
     const allCategories = [
         { id: 'watermark_club', name: '水印会' },
@@ -321,7 +339,13 @@
 
     function renderCategoryTabs() {
         const container = document.getElementById('categoryTabs');
-        const visibleCats = allCategories.filter(cat => !settings.hiddenCategories.includes(cat.id));
+        // 管理员可见所有分类，普通访客只显示未隐藏的分类
+        let visibleCats;
+        if (isAdmin) {
+            visibleCats = allCategories; // 管理员看到全部
+        } else {
+            visibleCats = allCategories.filter(cat => !settings.hiddenCategories.includes(cat.id));
+        }
         if (visibleCats.length === 0) {
             container.innerHTML = '<div style="padding:0.5rem;">暂无可见分类，请管理员设置</div>';
             return;
@@ -344,7 +368,8 @@
                 renderCurrentView();
             });
         });
-        if (settings.hiddenCategories.includes(currentCategory) && visibleCats.length) {
+        // 如果当前选中的分类在普通访客下不可见且还有别的分类，则切换
+        if (!isAdmin && settings.hiddenCategories.includes(currentCategory) && visibleCats.length) {
             currentCategory = visibleCats[0].id;
             renderCategoryTabs();
             document.getElementById('categoryTitle').innerText = allCategories.find(c=>c.id===currentCategory)?.name || '';
@@ -546,11 +571,11 @@
         }
     }
 
+    // 高亮条件：去掉存图相关判断
     function isWarningItem(item, cat) {
         if (cat === 'watermark_club') {
             if (!item.isFormFilled) return true;
             if (item.sendMethod === '单标群' && (!item.invited || !item.joinedGroup || !item.locked)) return true;
-            if (!item.isImageStored) return true;
             return false;
         } else if (cat === 'watermark_car') {
             if (!item.isPaid || !item.isFormFilled || !item.isImageSent) return true;
@@ -559,7 +584,7 @@
             if (!item.aaImgSent || !item.aaImgSaved) return true;
             return false;
         } else if (cat === 'original_club') {
-            if (!item.isFormFilled || !item.isGroupInvited || !item.isJoined || !item.isImageStored) return true;
+            if (!item.isFormFilled || !item.isGroupInvited || !item.isJoined) return true;
             return false;
         }
         return false;
@@ -570,13 +595,12 @@
         let statusHtml = '';
         if (currentCategory === 'watermark_club') {
             statusHtml = `<span class="detail-badge">${item.isCompleted ? '✅ 完结' : '🔄 未完结'}</span>
-                          <span class="detail-badge">${item.isImageStored ? '📸 已存图' : '⚠️ 未存图'}</span>`;
+                          <span class="detail-badge">${item.isImageStored ? '📸 已存图' : '🖼️ 未存图'}</span>`;
         } else if (currentCategory === 'watermark_car') {
-            // 水印车不显示完结和存图
             statusHtml = '';
         } else if (currentCategory === 'original_club') {
             statusHtml = `<span class="detail-badge">${item.isCompleted ? '✅ 完结' : '🔄 未完结'}</span>
-                          <span class="detail-badge">${item.isImageStored ? '📸 已存图' : '⚠️ 未存图'}</span>`;
+                          <span class="detail-badge">${item.isImageStored ? '📸 已存图' : '🖼️ 未存图'}</span>`;
         }
         let extra = '';
         if (currentCategory === 'watermark_club') {
@@ -612,7 +636,7 @@
         const warning = isWarningItem(item, 'design_car');
         let aaHtml = '';
         if (item.aaItems && item.aaItems.length) {
-            aaHtml = `<div style="margin-top:0.6rem; background:#f8fafc; border-radius:16px; padding:0.6rem;"><strong>📅 AA明细</strong><br>${item.aaItems.map(aa => `<div>▪️ ${aa.name} | ${aa.amount} | ${aa.time} | 发图:${aa.isImgSent?'✓':'✗'} 存图:${aa.isImgSaved?'✓':'✗'}</div>`).join('')}</div>`;
+            aaHtml = `<div style="margin-top:0.6rem; background:#f3f6fb; border-radius:16px; padding:0.6rem;"><strong>📅 AA明细</strong><br>${item.aaItems.map(aa => `<div>▪️ ${aa.name} | ${aa.amount} | ${aa.time} | 发图:${aa.isImgSent?'✓':'✗'} 存图:${aa.isImgSaved?'✓':'✗'}</div>`).join('')}</div>`;
         }
         const statusBadge = item.carStatus === 'on' ? '🚗 在车' : '🚫 下车';
         const remarkHtml = item.remark ? `<div class="remark-text">📝 备注：${escapeHtml(item.remark)}</div>` : '';
@@ -890,12 +914,13 @@
         const panel = document.getElementById('settingsPanel');
         if (!isAdmin) { panel.style.display = 'none'; return; }
         panel.style.display = 'block';
-        panel.innerHTML = `<div class="settings-panel" style="background:white; border-radius:24px; padding:1rem;">
-            <div class="settings-title">⚙️ 分类显示控制</div>
+        panel.innerHTML = `<div class="settings-panel" style="background:white; border-radius:24px; padding:1rem; margin-bottom:1rem;">
+            <div class="settings-title">⚙️ 分类显示控制 (仅影响访客)</div>
             <div class="category-switch" style="display:flex; gap:1rem; flex-wrap:wrap;">
                 ${allCategories.map(cat => `<label><input type="checkbox" class="cat-hide-checkbox" data-cat="${cat.id}" ${settings.hiddenCategories.includes(cat.id) ? '' : 'checked'}> ${cat.name}</label>`).join('')}
-                <button id="saveCategoryVisibility" class="admin-btn" style="background:#2c7a4d;">保存可见性</button>
+                <button id="saveCategoryVisibility" class="admin-btn" style="background:#4f7d9e;">保存可见性</button>
             </div>
+            <div class="remark-text" style="margin-top:0.5rem;">注：管理员始终可见所有分类。</div>
         </div>`;
         document.getElementById('saveCategoryVisibility').onclick = () => {
             const newHidden = [];
@@ -913,6 +938,7 @@
                 document.getElementById('addItemBtn').style.display = (currentCategory !== 'friend_gift') ? 'flex' : 'none';
                 document.getElementById('openSettingsBtn').style.display='flex';
                 renderSettingsPanel();
+                renderCategoryTabs(); // 重新渲染分类标签（显示全部）
                 renderCurrentView(); 
             } else alert('密码错误');
         } else {
@@ -921,6 +947,7 @@
             document.getElementById('addItemBtn').style.display='none';
             document.getElementById('openSettingsBtn').style.display='none';
             document.getElementById('settingsPanel').style.display='none';
+            renderCategoryTabs(); // 重新按隐藏设置渲染
             renderCurrentView();
         }
     };
